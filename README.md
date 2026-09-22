@@ -1,56 +1,64 @@
-# Welcome to your Expo app 👋
+# Lattis
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Premium visual thinking app built with Expo (SDK 57), Expo Router, TypeScript (strict), and React Native.
 
-## Get started
+## Stack
 
-1. Install dependencies
+- **Expo + Expo Router** — file-based navigation (`app/`)
+- **TypeScript strict** — `noUncheckedIndexedAccess` enabled
+- **Zustand** — global state (`src/store`)
+- **Reanimated + Gesture Handler** — animations and gestures
+- **React Native Skia** — installed/configured for the upcoming canvas (not yet composed)
+- **React Native SVG** — vector rendering
+- **Design system** — dark theme tokens in `src/theme`
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Getting started
 
 ```bash
-npm run reset-project
+npm install
+npx expo start        # then press i for iOS simulator
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Scripts
 
-### Other setup steps
+| Command                                | Purpose                 |
+| -------------------------------------- | ----------------------- |
+| `npm start` / `npx expo start`         | Dev server              |
+| `npm run ios` / `npx expo start --ios` | iOS simulator           |
+| `npm run lint` / `npx expo lint`       | ESLint + Prettier check |
+| `npx tsc --noEmit`                     | Typecheck               |
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## Structure
 
-## Learn more
+```
+app/                  # Expo Router routes (only Home exists in phase 1)
+  (auth)/             # Reserved — auth flow
+  (tabs)/             # Reserved — main tab shell
+  canvas/             # Reserved — infinite canvas
+  _layout.tsx         # Root providers + stack
+  index.tsx           # Home screen
 
-To learn more about developing your project with Expo, look at the following resources:
+src/
+  components/         # Shared UI kit (Button, Card, Text, Icon, ScreenContainer)
+  features/           # Feature modules (auth, projects, canvas) — empty in phase 1
+  services/           # External integrations (Firebase later)
+  store/              # Zustand stores
+  hooks/              # Shared hooks
+  theme/              # Design tokens + navigation theme
+  types/              # Shared TypeScript types
+  utils/              # Pure helpers
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+assets/
+  icons/              # Icon assets
+  fonts/              # Custom fonts (future)
+  images/             # App icons, splash, logo
+```
 
-## Join the community
+## Path aliases
 
-Join our community of developers creating universal apps.
+- `@/*` → `src/*` (e.g. `@/components`, `@/theme`)
+- `@/assets/*` → `assets/*`
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Out of scope (phase 1)
+
+Authentication, Firebase, infinite canvas implementation, and CRUD screens are intentionally **not** built yet.
