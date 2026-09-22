@@ -21,7 +21,7 @@ import {
 } from 'firebase/firestore';
 import { getFirestore } from 'firebase/firestore';
 
-import type { Project, Thread } from '@/types';
+import type { Message, MessageRole, Project, Thread } from '@/types';
 
 import { app } from './config';
 
@@ -339,4 +339,64 @@ export async function updateThread(
 /** Delete `threads/{threadId}`. Authorization is enforced by security rules. */
 export async function deleteThread(threadId: string): Promise<void> {
   await deleteDoc(doc(db, 'threads', threadId));
+}
+
+type MessageDoc = {
+  role: MessageRole;
+  content: string;
+  createdAt?: unknown;
+};
+
+function mapMessage(id: string, threadId: string, data: MessageDoc): Message {
+  return {
+    id,
+    threadId,
+    role: data.role,
+    content: data.content,
+    createdAt: toISOClock(data.createdAt),
+  };
+}
+
+/**
+ * Realtime messages for one thread (`threads/{threadId}/messages`), sorted
+ * client-side by `createdAt` asc. Ownership is enforced by security rules on
+ * the parent thread doc.
+ */
+export function watchThreadMessages(
+  threadId: string,
+  onChange: (messages: Message[]) => void,
+  onError?: (error: Error) => void,
+): Unsubscribe {
+  return onSnapshot(
+    collection(db, 'threads', threadId, 'messages'),
+    (snapshot) => {
+      const messages = snapshot.docs
+        .map((document) => mapMessage(document.id, threadId, document.data() as MessageDoc))
+        .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+      onChange(messages);
+    },
+    (error) => {
+      onError?.(error);
+    },
+  );
+}
+
+/**
+ * Append `threads/{threadId}/messages/{messageId}` with the full schema
+ * `{ id, threadId, role, content, createdAt }` and a server timestamp.
+ * The id is pre-generated so it can be stored alongside the document id.
+ */
+export async function sendThreadMessage(
+  threadId: string,
+  input: { role: MessageRole; content: string },
+): Promise<string> {
+  const ref = doc(collection(db, 'threads', threadId, 'messages'));
+  await setDoc(ref, {
+    id: ref.id,
+    threadId,
+    role: input.role,
+    content: input.content,
+    createdAt: serverTimestamp(),
+  });
+  return ref.id;
 }

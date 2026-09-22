@@ -4,11 +4,15 @@
  * cards, and helpers. Firestore access only happens via `@/services`.
  */
 
+export { ChatComposer, type ChatComposerProps } from './components/ChatComposer';
 export { CreateThreadSheet } from './components/CreateThreadSheet';
 export { EmptyThreads } from './components/EmptyThreads';
+export { MessageBubble, type MessageBubbleProps } from './components/MessageBubble';
 export { RenameThreadSheet } from './components/RenameThreadSheet';
 export { ThreadActionsSheet } from './components/ThreadActionsSheet';
-export { ThreadCard } from './components/ThreadCard';
+export { ThreadCard, type ThreadCardProps } from './components/ThreadCard';
+export { TypingIndicator } from './components/TypingIndicator';
 export { DEFAULT_THREAD_TITLE, THREAD_TITLE_MAX } from './constants';
+export { useThreadMessages, type ThreadMessagesResult } from './hooks/useThreadMessages';
 export { useThreadsStore, type ThreadsState } from './store/threadsStore';
-export { filterThreadsByTitle, formatRelativeTime } from './utils';
+export { filterThreadsByTitle, formatClock, formatRelativeTime } from './utils';

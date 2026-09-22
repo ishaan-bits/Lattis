@@ -164,7 +164,7 @@ export default function HomeScreen(): React.JSX.Element {
             index={index}
             onPress={() =>
               router.push({
-                pathname: '/threads',
+                pathname: '/projects/[projectId]',
                 params: { projectId: item.id, projectTitle: item.title },
               })
             }

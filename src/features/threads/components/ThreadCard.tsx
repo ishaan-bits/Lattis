@@ -20,11 +20,18 @@ export type ThreadCardProps = {
   thread: Thread;
   /** List index — staggers the fade-in entrance. */
   index: number;
+  /** Opens the chat workspace for this thread. */
+  onPress: () => void;
   /** Opens rename/archive/delete menu (also wired to long-press). */
   onActions: () => void;
 };
 
-export function ThreadCard({ thread, index, onActions }: ThreadCardProps): React.JSX.Element {
+export function ThreadCard({
+  thread,
+  index,
+  onPress,
+  onActions,
+}: ThreadCardProps): React.JSX.Element {
   return (
     <Animated.View
       entering={FadeInUp.delay(Math.min(index, 8) * 60).duration(420)}
@@ -32,9 +39,10 @@ export function ThreadCard({ thread, index, onActions }: ThreadCardProps): React
     >
       <PressableScale
         accessibilityLabel={`${thread.title} thread`}
-        accessibilityHint="Long press for rename, archive, and delete"
+        accessibilityHint="Opens the chat. Long press for rename, archive, and delete"
         delayLongPress={350}
         onLongPress={onActions}
+        onPress={onPress}
         style={styles.card}
       >
         <View style={styles.body}>

@@ -38,7 +38,8 @@ export default function RootLayout() {
           >
             <Stack.Screen name="index" />
             <Stack.Screen name="splash" />
-            <Stack.Screen name="threads" />
+            <Stack.Screen name="projects/[projectId]" />
+            <Stack.Screen name="threads/[threadId]" />
             <Stack.Screen name="(auth)/login" />
             <Stack.Screen name="(auth)/register" />
             <Stack.Screen name="(auth)/forgot-password" />

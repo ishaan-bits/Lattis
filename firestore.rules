@@ -33,5 +33,16 @@ service cloud.firestore {
       allow read, update, delete: if request.auth != null
         && resource.data.ownerId == request.auth.uid;
     }
+
+    // Thread messages: gated by ownership of the parent thread doc.
+    match /threads/{threadId}/messages/{messageId} {
+      allow read, delete: if request.auth != null
+        && get(/databases/$(database)/documents/threads/$(threadId)).data.ownerId == request.auth.uid;
+      allow create: if request.auth != null
+        && get(/databases/$(database)/documents/threads/$(threadId)).data.ownerId == request.auth.uid
+        && request.resource.data.role in ['user', 'assistant']
+        && request.resource.data.content is string;
+      allow update: if false;
+    }
   }
 }

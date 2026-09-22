@@ -1,9 +1,9 @@
 /**
- * Threads — realtime thread list for one project.
+ * Project Threads — realtime thread list for one project.
  *
  * Back nav, live search, and a FAB-backed create sheet. Threads are scoped
  * to `ownerId + projectId` via the threads store; long-press opens rename /
- * archive / delete actions.
+ * archive / delete actions, tap opens the chat workspace.
  */
 
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
@@ -25,7 +25,7 @@ import {
 import { colors, spacing } from '@/theme';
 import type { Thread } from '@/types';
 
-export default function ThreadsScreen(): React.JSX.Element {
+export default function ProjectThreadsScreen(): React.JSX.Element {
   const { initialized, user, loading } = useAuth();
   const params = useLocalSearchParams<{ projectId?: string; projectTitle?: string }>();
   const projectId = typeof params.projectId === 'string' ? params.projectId : '';
@@ -122,13 +122,11 @@ export default function ThreadsScreen(): React.JSX.Element {
 
             <View style={styles.titleBlock}>
               <Text variant="title" style={styles.title}>
+                {projectTitle || 'Threads'}
+              </Text>
+              <Text variant="body" color="textSecondary">
                 Threads
               </Text>
-              {projectTitle ? (
-                <Text variant="body" color="textSecondary" numberOfLines={1}>
-                  {projectTitle}
-                </Text>
-              ) : null}
             </View>
 
             <SearchBar
@@ -144,7 +142,17 @@ export default function ThreadsScreen(): React.JSX.Element {
         }
         ListEmptyComponent={renderEmpty}
         renderItem={({ item, index }) => (
-          <ThreadCard thread={item} index={index} onActions={() => setActionsThread(item)} />
+          <ThreadCard
+            thread={item}
+            index={index}
+            onPress={() =>
+              router.push({
+                pathname: '/threads/[threadId]',
+                params: { threadId: item.id, threadTitle: item.title },
+              })
+            }
+            onActions={() => setActionsThread(item)}
+          />
         )}
       />
 
