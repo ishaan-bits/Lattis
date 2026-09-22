@@ -6,6 +6,7 @@
  */
 
 import { getApp, getApps, initializeApp, type FirebaseApp } from 'firebase/app';
+import { getAuth, type Auth } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY ?? '',
@@ -24,20 +25,20 @@ export const isFirebaseConfigured = Boolean(
   firebaseConfig.appId,
 );
 
-let app: FirebaseApp | null = null;
-
-/** Initialize once and reuse the default app across the process. */
-export function getFirebaseApp(): FirebaseApp {
-  if (app) return app;
+function createApp(): FirebaseApp {
   if (getApps().length > 0) {
-    app = getApp();
-    return app;
+    return getApp();
   }
   if (!isFirebaseConfigured) {
     throw new Error(
       'Firebase is not configured. Set EXPO_PUBLIC_FIREBASE_* values in .env (see .env.example).',
     );
   }
-  app = initializeApp(firebaseConfig);
-  return app;
+  return initializeApp(firebaseConfig);
 }
+
+/** Default Firebase app (singleton). */
+export const app: FirebaseApp = createApp();
+
+/** Default Firebase Auth instance (singleton). */
+export const auth: Auth = getAuth(app);

@@ -4,12 +4,11 @@
 
 export {
   authErrorMessage,
-  createAccount,
-  getFirebaseAuth,
   observeAuthState,
   resetPassword,
   signIn,
-  signOut,
+  signUp,
+  signOutUser,
   type AuthUser,
 } from './firebase/auth';
-export { getFirebaseApp, isFirebaseConfigured } from './firebase/config';
+export { app, auth, isFirebaseConfigured } from './firebase/config';

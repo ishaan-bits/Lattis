@@ -7,18 +7,16 @@
 
 import {
   createUserWithEmailAndPassword,
-  getAuth,
   onAuthStateChanged,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   updateProfile,
-  type Auth,
   type Unsubscribe,
   type User,
 } from 'firebase/auth';
 
-import { getFirebaseApp } from './config';
+import { auth } from './config';
 
 /** Serializable user profile shared with the UI/store. */
 export type AuthUser = {
@@ -27,14 +25,6 @@ export type AuthUser = {
   displayName: string | null;
   photoURL: string | null;
 };
-
-let authInstance: Auth | null = null;
-
-export function getFirebaseAuth(): Auth {
-  if (authInstance) return authInstance;
-  authInstance = getAuth(getFirebaseApp());
-  return authInstance;
-}
 
 function toAuthUser(user: User): AuthUser {
   return {
@@ -45,12 +35,7 @@ function toAuthUser(user: User): AuthUser {
   };
 }
 
-export async function createAccount(
-  name: string,
-  email: string,
-  password: string,
-): Promise<AuthUser> {
-  const auth = getFirebaseAuth();
+export async function signUp(email: string, password: string, name: string): Promise<AuthUser> {
   const credential = await createUserWithEmailAndPassword(auth, email, password);
   if (name.trim()) {
     await updateProfile(credential.user, { displayName: name.trim() });
@@ -59,17 +44,16 @@ export async function createAccount(
 }
 
 export async function signIn(email: string, password: string): Promise<AuthUser> {
-  const auth = getFirebaseAuth();
   const credential = await signInWithEmailAndPassword(auth, email, password);
   return toAuthUser(credential.user);
 }
 
-export async function signOut(): Promise<void> {
-  await firebaseSignOut(getFirebaseAuth());
+export async function signOutUser(): Promise<void> {
+  await firebaseSignOut(auth);
 }
 
 export async function resetPassword(email: string): Promise<void> {
-  await sendPasswordResetEmail(getFirebaseAuth(), email);
+  await sendPasswordResetEmail(auth, email);
 }
 
 /**
@@ -77,7 +61,7 @@ export async function resetPassword(email: string): Promise<void> {
  * Emits `null` on sign-out.
  */
 export function observeAuthState(onChange: (user: AuthUser | null) => void): Unsubscribe {
-  return onAuthStateChanged(getFirebaseAuth(), (user) => {
+  return onAuthStateChanged(auth, (user) => {
     onChange(user ? toAuthUser(user) : null);
   });
 }

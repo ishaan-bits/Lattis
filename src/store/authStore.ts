@@ -12,10 +12,10 @@ import { create } from 'zustand';
 
 import {
   authErrorMessage,
-  createAccount,
   observeAuthState,
   signIn as firebaseSignIn,
-  signOut as firebaseSignOut,
+  signOutUser,
+  signUp,
   type AuthUser,
 } from '@/services';
 
@@ -116,7 +116,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   register: async (name, email, password) => {
     set({ loading: true });
     try {
-      const user = await createAccount(name.trim(), email.trim(), password);
+      const user = await signUp(email.trim(), password, name.trim());
       set({ user, loading: false, initialized: true });
       await writeSession(user);
     } catch (error) {
@@ -128,7 +128,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   logout: async () => {
     set({ loading: true });
     try {
-      await firebaseSignOut();
+      await signOutUser();
       set({ user: null, loading: false });
       await writeSession(null);
     } catch (error) {
