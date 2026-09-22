@@ -94,6 +94,14 @@ export function authErrorMessage(error: unknown): string {
       return 'Network error. Check your connection.';
     case 'auth/operation-not-allowed':
       return 'Email/password sign-in is disabled in Firebase Console.';
+    case 'permission-denied':
+      return 'Firestore rules rejected this request. Publish the rules in Firebase Console.';
+    case 'failed-precondition':
+      return 'Firestore is not ready yet. Create the database in Firebase Console.';
+    case 'unavailable':
+      return 'Network error. Check your connection.';
+    case 'already-exists':
+      return 'That username is already taken.';
     default:
       return 'Something went wrong. Please try again.';
   }

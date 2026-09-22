@@ -1,0 +1,37 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Profile docs: owner-only read/write; uid must match the doc id.
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow create, update: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.uid == userId;
+      allow delete: if false;
+    }
+
+    // Uniqueness index: public read so signup can check before Auth create;
+    // first authenticated writer wins (setDoc on existing doc = update = denied).
+    match /usernames/{username} {
+      allow read: if true;
+      allow create: if request.auth != null && !exists(/databases/$(database)/documents/usernames/$(username));
+      allow update, delete: if false;
+    }
+
+    // Projects: only the owner can read or mutate their docs.
+    match /projects/{projectId} {
+      allow create: if request.auth != null
+        && request.resource.data.ownerId == request.auth.uid;
+      allow read, update, delete: if request.auth != null
+        && resource.data.ownerId == request.auth.uid;
+    }
+
+    // Threads (future canvas threads): same owner-gated shape as projects.
+    match /threads/{threadId} {
+      allow create: if request.auth != null
+        && request.resource.data.ownerId == request.auth.uid;
+      allow read, update, delete: if request.auth != null
+        && resource.data.ownerId == request.auth.uid;
+    }
+  }
+}

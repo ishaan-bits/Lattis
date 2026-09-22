@@ -3,4 +3,4 @@
  */
 
 export { useAppStore, type AppState } from './app-store';
-export { useAuthStore, type AuthState } from './authStore';
+export { useAuthStore, type AuthState, type RegisterInput } from './authStore';

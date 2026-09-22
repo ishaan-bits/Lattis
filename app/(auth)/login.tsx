@@ -67,8 +67,7 @@ export default function LoginScreen(): React.JSX.Element {
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
-              autoComplete="email"
-              textContentType="emailAddress"
+              autoCapitalize="none"
               placeholder="you@example.com"
               editable={!busy && !loading}
             />
@@ -77,8 +76,6 @@ export default function LoginScreen(): React.JSX.Element {
               value={password}
               onChangeText={setPassword}
               secure
-              autoComplete="password"
-              textContentType="password"
               placeholder="Your password"
               editable={!busy && !loading}
             />

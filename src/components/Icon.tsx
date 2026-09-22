@@ -27,6 +27,9 @@ const FALLBACK_PATHS: Partial<Record<SFSymbol, string>> = {
   plus: 'M12 5v14M5 12h14',
   folder: 'M3 6h6l2 2h10v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z',
   'chevron.right': 'M9 6l6 6-6 6',
+  'chevron.left': 'M15 6l-6 6 6 6',
+  magnifyingglass: 'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14M20 20l-4-4',
+  xmark: 'M6 6l12 12M18 6L6 18',
 };
 
 const DEFAULT_FALLBACK = 'M4 4h16v16H4z';

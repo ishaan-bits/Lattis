@@ -1,19 +1,73 @@
 /**
- * Home — authenticated landing screen (foundation phase).
+ * Home — premium projects dashboard.
  *
- * Shows the Lattis brand mark and an empty "Projects" state until the
- * projects feature lands.
+ * Time-based greeting, live search, avatar, and a realtime 2-column project
+ * grid scoped to the signed-in owner. Create / rename / delete all run
+ * through the projects store (no Firestore calls in UI).
  */
 
-import { Redirect } from 'expo-router';
-import { Image, StyleSheet, View } from 'react-native';
+import { Redirect, router } from 'expo-router';
+import { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Alert, FlatList, StyleSheet, View } from 'react-native';
 
-import { Card, ScreenContainer, Text } from '@/components';
+import { ScreenContainer, Text } from '@/components';
 import { useAuth } from '@/features/auth';
-import { spacing } from '@/theme';
+import {
+  CreateProjectSheet,
+  EmptyProjects,
+  FabButton,
+  ProjectActionsSheet,
+  ProjectCard,
+  RenameProjectSheet,
+  SearchBar,
+  useProjectsStore,
+} from '@/features/projects';
+import { colors, spacing } from '@/theme';
+import type { Project } from '@/types';
+
+function greetingForNow(date = new Date()): string {
+  const hour = date.getHours();
+  if (hour < 12) return 'Good Morning';
+  if (hour < 18) return 'Good Afternoon';
+  return 'Good Evening';
+}
+
+function firstNameOf(fullName: string | null | undefined): string | null {
+  const name = fullName?.trim();
+  if (!name) return null;
+  return name.split(/\s+/)[0] ?? null;
+}
 
 export default function HomeScreen(): React.JSX.Element {
-  const { initialized, user, loading } = useAuth();
+  const { initialized, user, userProfile, loading, logout } = useAuth();
+
+  const projects = useProjectsStore((state) => state.projects);
+  const projectsLoading = useProjectsStore((state) => state.loading);
+  const searchQuery = useProjectsStore((state) => state.searchQuery);
+  const setSearchQuery = useProjectsStore((state) => state.setSearchQuery);
+  const subscribe = useProjectsStore((state) => state.subscribe);
+  const resetProjects = useProjectsStore((state) => state.reset);
+
+  const [createVisible, setCreateVisible] = useState(false);
+  const [actionsProject, setActionsProject] = useState<Project | null>(null);
+  const [renameProject, setRenameProject] = useState<Project | null>(null);
+  const [greeting] = useState(() => greetingForNow());
+
+  const ownerId = user?.uid;
+
+  useEffect(() => {
+    if (!ownerId) return undefined;
+    subscribe(ownerId);
+    return () => resetProjects();
+  }, [ownerId, subscribe, resetProjects]);
+
+  const visibleProjects = useMemo(() => {
+    const needle = searchQuery.trim().toLowerCase();
+    const filtered = needle
+      ? projects.filter((project) => project.title.toLowerCase().includes(needle))
+      : projects;
+    return [...filtered].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  }, [projects, searchQuery]);
 
   if (!initialized && loading) {
     return <Redirect href="/splash" />;
@@ -23,77 +77,169 @@ export default function HomeScreen(): React.JSX.Element {
     return <Redirect href="/login" />;
   }
 
+  const firstName = firstNameOf(userProfile?.fullName) ?? userProfile?.username ?? 'there';
+  const avatarLetter = (firstName[0] ?? '?').toUpperCase();
+  const showEmptyState = !projectsLoading && projects.length === 0;
+  const showNoMatches = !projectsLoading && projects.length > 0 && visibleProjects.length === 0;
+
+  function onAvatarPress(): void {
+    Alert.alert('Account', userProfile?.email ?? user?.email ?? 'Signed in', [
+      { text: 'Sign Out', style: 'destructive', onPress: () => void logout() },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  }
+
+  function renderEmpty(): React.JSX.Element | null {
+    if (projectsLoading && projects.length === 0) {
+      return (
+        <View style={styles.loadingBox}>
+          <ActivityIndicator color={colors.primary} size="small" />
+        </View>
+      );
+    }
+    if (showEmptyState) {
+      return <EmptyProjects onCreate={() => setCreateVisible(true)} />;
+    }
+    if (showNoMatches) {
+      return (
+        <View style={styles.noMatches}>
+          <Text variant="body" color="textSecondary" style={styles.noMatchesText}>
+            No projects match “{searchQuery.trim()}”.
+          </Text>
+        </View>
+      );
+    }
+    return null;
+  }
+
   return (
     <ScreenContainer>
-      <View style={styles.hero}>
-        <Image
-          source={require('../assets/images/icon.png')}
-          style={styles.logo}
-          accessibilityLabel="Lattis logo"
-        />
-        <Text variant="title" style={styles.brand}>
-          Lattis
-        </Text>
-        <Text variant="body" color="textSecondary" style={styles.tagline}>
-          A visual thinking workspace
-        </Text>
-      </View>
+      <FlatList
+        data={visibleProjects}
+        keyExtractor={(item) => item.id}
+        numColumns={2}
+        columnWrapperStyle={styles.gridRow}
+        contentContainerStyle={styles.listContent}
+        keyboardDismissMode="on-drag"
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        ListHeaderComponent={
+          <View style={styles.header}>
+            <View style={styles.topRow}>
+              <View style={styles.greetingBlock}>
+                <Text variant="title" style={styles.greeting}>
+                  {greeting}, {firstName}
+                </Text>
+                <Text variant="body" color="textSecondary">
+                  Your ideas, organized.
+                </Text>
+              </View>
+              <View
+                accessibilityLabel="Account"
+                accessibilityRole="button"
+                style={styles.avatar}
+                onTouchEnd={onAvatarPress}
+              >
+                <Text variant="bodyMedium" color="primary">
+                  {avatarLetter}
+                </Text>
+              </View>
+            </View>
 
-      <View style={styles.section}>
-        <Text variant="label" color="textMuted" style={styles.sectionTitle}>
-          Projects
-        </Text>
+            <SearchBar
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="Search projects"
+            />
 
-        <Card style={styles.emptyCard}>
-          <Text variant="subtitle" style={styles.emptyTitle}>
-            No projects yet
-          </Text>
-          <Text variant="body" color="textSecondary" style={styles.emptyBody}>
-            Projects you create will appear here, ready to open on your canvas.
-          </Text>
-        </Card>
-      </View>
+            <Text variant="label" color="textMuted" style={styles.sectionTitle}>
+              Projects
+            </Text>
+          </View>
+        }
+        ListEmptyComponent={renderEmpty}
+        renderItem={({ item, index }) => (
+          <ProjectCard
+            project={item}
+            index={index}
+            onPress={() =>
+              router.push({
+                pathname: '/threads',
+                params: { projectId: item.id, projectTitle: item.title },
+              })
+            }
+            onActions={() => setActionsProject(item)}
+          />
+        )}
+      />
+
+      <FabButton active={createVisible} onPress={() => setCreateVisible(true)} />
+
+      <CreateProjectSheet visible={createVisible} onClose={() => setCreateVisible(false)} />
+      <ProjectActionsSheet
+        project={actionsProject}
+        onClose={() => setActionsProject(null)}
+        onRename={(project) => {
+          setActionsProject(null);
+          setRenameProject(project);
+        }}
+      />
+      <RenameProjectSheet
+        key={renameProject?.id ?? 'rename-closed'}
+        project={renameProject}
+        onClose={() => setRenameProject(null)}
+      />
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  hero: {
+  header: {
+    gap: spacing.md,
+    paddingBottom: spacing.xs,
+  },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  greetingBlock: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
+    gap: spacing.xxs,
   },
-  logo: {
-    width: 96,
-    height: 96,
-    borderRadius: 24,
-    marginBottom: spacing.sm,
-  },
-  brand: {
+  greeting: {
     letterSpacing: -0.5,
   },
-  tagline: {
-    textAlign: 'center',
-  },
-  section: {
-    gap: spacing.md,
-    paddingBottom: spacing.xl,
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primarySoft,
+    borderWidth: 1,
+    borderColor: colors.primary,
   },
   sectionTitle: {
     marginLeft: spacing.xxs,
   },
-  emptyCard: {
+  listContent: {
+    gap: spacing.md,
+    paddingBottom: 96,
+  },
+  gridRow: {
+    gap: spacing.md,
+  },
+  loadingBox: {
+    paddingVertical: spacing.xxl,
     alignItems: 'center',
-    gap: spacing.xs,
+  },
+  noMatches: {
     paddingVertical: spacing.xl,
-    paddingHorizontal: spacing.lg,
+    alignItems: 'center',
   },
-  emptyTitle: {
+  noMatchesText: {
     textAlign: 'center',
-  },
-  emptyBody: {
-    textAlign: 'center',
-    maxWidth: 280,
   },
 });
