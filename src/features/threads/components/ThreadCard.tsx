@@ -1,9 +1,10 @@
 /**
  * ThreadCard — one thread row in the threads list.
  *
- * Title, relative updated time, and an archived badge when applicable.
- * Fades in on mount and scales to 0.97 while pressed. Long-press opens the
- * rename / archive / delete action menu.
+ * Title, latest-message preview, relative updated time, and an archived
+ * badge when applicable. Optional unread dot is future-ready (no data
+ * source yet). Fades in on mount and scales to 0.97 while pressed.
+ * Long-press opens the rename / archive / delete action menu.
  */
 
 import { StyleSheet, View } from 'react-native';
@@ -20,6 +21,10 @@ export type ThreadCardProps = {
   thread: Thread;
   /** List index — staggers the fade-in entrance. */
   index: number;
+  /** Latest message preview (from `useThreadPreviews`). */
+  preview?: string;
+  /** Unread affordance — future-ready, defaults off. */
+  unread?: boolean;
   /** Opens the chat workspace for this thread. */
   onPress: () => void;
   /** Opens rename/archive/delete menu (also wired to long-press). */
@@ -29,6 +34,8 @@ export type ThreadCardProps = {
 export function ThreadCard({
   thread,
   index,
+  preview,
+  unread = false,
   onPress,
   onActions,
 }: ThreadCardProps): React.JSX.Element {
@@ -46,20 +53,30 @@ export function ThreadCard({
         style={styles.card}
       >
         <View style={styles.body}>
-          <Text variant="bodyMedium" numberOfLines={1} style={styles.title}>
-            {thread.title}
-          </Text>
-          <Text variant="caption" color="textMuted" style={styles.updated}>
-            Updated {formatRelativeTime(thread.updatedAt)}
-          </Text>
-        </View>
-        {thread.archived ? (
-          <View style={styles.badge} accessibilityLabel="Archived">
-            <Text variant="caption" color="textSecondary">
-              Archived
+          <View style={styles.titleRow}>
+            <Text variant="bodyMedium" numberOfLines={1} style={styles.title}>
+              {thread.title}
             </Text>
+            {unread ? <View accessibilityLabel="Unread" style={styles.unread} /> : null}
           </View>
-        ) : null}
+          {preview ? (
+            <Text variant="caption" color="textSecondary" numberOfLines={1} style={styles.preview}>
+              {preview}
+            </Text>
+          ) : null}
+          <View style={styles.metaRow}>
+            <Text variant="caption" color="textMuted">
+              Updated {formatRelativeTime(thread.updatedAt)}
+            </Text>
+            {thread.archived ? (
+              <View style={styles.badge} accessibilityLabel="Archived">
+                <Text variant="caption" color="textSecondary">
+                  Archived
+                </Text>
+              </View>
+            ) : null}
+          </View>
+        </View>
       </PressableScale>
     </Animated.View>
   );
@@ -86,10 +103,29 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: spacing.xxs,
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
   title: {
+    flex: 1,
     letterSpacing: -0.1,
   },
-  updated: {
+  unread: {
+    width: 8,
+    height: 8,
+    borderRadius: radius.full,
+    backgroundColor: colors.accent,
+  },
+  preview: {
+    marginTop: 1,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.xs,
     marginTop: 2,
   },
   badge: {

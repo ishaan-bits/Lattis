@@ -13,6 +13,8 @@ export { ThreadActionsSheet } from './components/ThreadActionsSheet';
 export { ThreadCard, type ThreadCardProps } from './components/ThreadCard';
 export { TypingIndicator } from './components/TypingIndicator';
 export { DEFAULT_THREAD_TITLE, THREAD_TITLE_MAX } from './constants';
+export { useThread, type ThreadResult } from './hooks/useThread';
 export { useThreadMessages, type ThreadMessagesResult } from './hooks/useThreadMessages';
+export { useThreadPreviews } from './hooks/useThreadPreviews';
 export { useThreadsStore, type ThreadsState } from './store/threadsStore';
 export { filterThreadsByTitle, formatClock, formatRelativeTime } from './utils';

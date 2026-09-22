@@ -20,6 +20,7 @@ import {
   ThreadActionsSheet,
   ThreadCard,
   filterThreadsByTitle,
+  useThreadPreviews,
   useThreadsStore,
 } from '@/features/threads';
 import { colors, spacing } from '@/theme';
@@ -54,6 +55,9 @@ export default function ProjectThreadsScreen(): React.JSX.Element {
     () => filterThreadsByTitle(threads, searchQuery),
     [threads, searchQuery],
   );
+
+  const threadIds = useMemo(() => visibleThreads.map((thread) => thread.id), [visibleThreads]);
+  const previews = useThreadPreviews(threadIds);
 
   if (!projectId) {
     return <Redirect href="/" />;
@@ -145,10 +149,16 @@ export default function ProjectThreadsScreen(): React.JSX.Element {
           <ThreadCard
             thread={item}
             index={index}
+            preview={previews[item.id]}
             onPress={() =>
               router.push({
                 pathname: '/threads/[threadId]',
-                params: { threadId: item.id, threadTitle: item.title },
+                params: {
+                  threadId: item.id,
+                  threadTitle: item.title,
+                  projectId,
+                  projectTitle,
+                },
               })
             }
             onActions={() => setActionsThread(item)}

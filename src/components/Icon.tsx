@@ -31,6 +31,15 @@ const FALLBACK_PATHS: Partial<Record<SFSymbol, string>> = {
   'arrow.up': 'M12 19V5M5 12l7-7 7 7',
   magnifyingglass: 'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14M20 20l-4-4',
   xmark: 'M6 6l12 12M18 6L6 18',
+  ellipsis: 'M5 12h.01M12 12h.01M19 12h.01',
+  stop: 'M7 7h10v10H7z',
+  sparkles:
+    'M12 3l1.8 4.4L18 9l-4.2 1.6L12 15l-1.6-4.4L6 9l4.4-1.6zM18.5 14.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z',
+  trash:
+    'M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13M10 11v6M14 11v6',
+  checkmark: 'M5 13l4 4L19 7',
+  gobackward: 'M3.5 12a8.5 8.5 0 1 0 2.5-6M3.5 4.5V10H9',
+  'doc.on.doc': 'M9 9h10v10H9zM5 15H4V5a1 1 0 0 1 1-1h10v1',
 };
 
 const DEFAULT_FALLBACK = 'M4 4h16v16H4z';

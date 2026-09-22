@@ -10,7 +10,9 @@ import {
   deleteDoc,
   doc,
   getDoc,
+  limit,
   onSnapshot,
+  orderBy,
   query,
   serverTimestamp,
   setDoc,
@@ -341,6 +343,23 @@ export async function deleteThread(threadId: string): Promise<void> {
   await deleteDoc(doc(db, 'threads', threadId));
 }
 
+/** Realtime `threads/{threadId}` doc; emits `null` when missing. */
+export function watchThread(
+  threadId: string,
+  onChange: (thread: Thread | null) => void,
+  onError?: (error: Error) => void,
+): Unsubscribe {
+  return onSnapshot(
+    doc(db, 'threads', threadId),
+    (snapshot) => {
+      onChange(snapshot.exists() ? mapThread(snapshot.id, snapshot.data() as ThreadDoc) : null);
+    },
+    (error) => {
+      onError?.(error);
+    },
+  );
+}
+
 type MessageDoc = {
   role: MessageRole;
   content: string;
@@ -399,4 +418,51 @@ export async function sendThreadMessage(
     createdAt: serverTimestamp(),
   });
   return ref.id;
+}
+
+/** Latest message snapshot used for thread-list previews. */
+export type ThreadPreview = {
+  content: string;
+  role: MessageRole;
+  createdAt: string;
+};
+
+/**
+ * Realtime latest message for one thread (`orderBy createdAt desc`, `limit 1`)
+ * so list screens can show a preview without loading full histories.
+ */
+export function watchThreadPreview(
+  threadId: string,
+  onChange: (preview: ThreadPreview | null) => void,
+  onError?: (error: Error) => void,
+): Unsubscribe {
+  const previewQuery = query(
+    collection(db, 'threads', threadId, 'messages'),
+    orderBy('createdAt', 'desc'),
+    limit(1),
+  );
+  return onSnapshot(
+    previewQuery,
+    (snapshot) => {
+      const latest = snapshot.docs[0];
+      if (!latest) {
+        onChange(null);
+        return;
+      }
+      const data = latest.data() as MessageDoc;
+      onChange({
+        content: data.content,
+        role: data.role,
+        createdAt: toISOClock(data.createdAt),
+      });
+    },
+    (error) => {
+      onError?.(error);
+    },
+  );
+}
+
+/** Delete `threads/{threadId}/messages/{messageId}` (delete / regenerate). */
+export async function deleteThreadMessage(threadId: string, messageId: string): Promise<void> {
+  await deleteDoc(doc(db, 'threads', threadId, 'messages', messageId));
 }
