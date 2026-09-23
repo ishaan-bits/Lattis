@@ -4,7 +4,7 @@
 
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Link, router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -87,7 +87,7 @@ export default function RegisterScreen(): React.JSX.Element {
     !busy &&
     !loading;
 
-  function onDateChange(event: DateTimePickerEvent, selected?: Date) {
+  const onDateChange = useCallback((event: DateTimePickerEvent, selected?: Date) => {
     if (event.type === 'dismissed') {
       setShowDatePicker(false);
       return;
@@ -96,9 +96,9 @@ export default function RegisterScreen(): React.JSX.Element {
       setDateOfBirth(selected);
     }
     setShowDatePicker(false);
-  }
+  }, []);
 
-  async function onSubmit() {
+  const onSubmit = useCallback(async () => {
     if (!canSubmit || !dateOfBirth) return;
     setError(null);
     setBusy(true);
@@ -116,7 +116,7 @@ export default function RegisterScreen(): React.JSX.Element {
     } finally {
       setBusy(false);
     }
-  }
+  }, [canSubmit, dateOfBirth, register, name, trimmedUsername, email, password]);
 
   return (
     <ScreenContainer edges={['top', 'bottom', 'left', 'right']}>

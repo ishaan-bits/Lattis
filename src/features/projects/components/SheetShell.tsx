@@ -7,6 +7,7 @@
 
 import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { SlideInDown } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Text } from '@/components';
 import { colors, radius, shadows, spacing } from '@/theme';
@@ -27,6 +28,9 @@ export function SheetShell({
   children,
   footer,
 }: SheetShellProps): React.JSX.Element {
+  const insets = useSafeAreaInsets();
+  const sheetPad = { paddingBottom: Math.max(spacing.xl, insets.bottom + spacing.md) };
+
   return (
     <Modal
       visible={visible}
@@ -48,7 +52,7 @@ export function SheetShell({
         >
           <Animated.View
             entering={SlideInDown.springify().damping(18).mass(0.85)}
-            style={styles.sheet}
+            style={[styles.sheet, sheetPad]}
           >
             <View style={styles.grabber} accessibilityElementsHidden />
             <Text variant="subtitle" style={styles.title}>
@@ -78,7 +82,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: radius.xl,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
-    paddingBottom: spacing.xl,
     gap: spacing.md,
     maxHeight: '90%',
     borderWidth: StyleSheet.hairlineWidth,

@@ -5,7 +5,7 @@
  * focus ring, and optional error message — no inline styles.
  */
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 
 import { Text } from '@/components';
@@ -29,12 +29,32 @@ export function Input({
   const [focused, setFocused] = useState(false);
   const [hidden, setHidden] = useState(secure);
 
+  const handleFocus = useCallback(
+    (event: Parameters<NonNullable<TextInputProps['onFocus']>>[0]) => {
+      setFocused(true);
+      onFocus?.(event);
+    },
+    [onFocus],
+  );
+
+  const handleBlur = useCallback(
+    (event: Parameters<NonNullable<TextInputProps['onBlur']>>[0]) => {
+      setFocused(false);
+      onBlur?.(event);
+    },
+    [onBlur],
+  );
+
+  const toggleSecure = useCallback(() => setHidden((value) => !value), []);
+
   return (
     <View style={styles.group}>
       <Text variant="label" color="textMuted" style={styles.label}>
         {label}
       </Text>
       <View
+        // conditional styles on wrapper can trigger focus-loss in RN#45798; collapsable={false} forces stable native View identity
+        collapsable={false}
         style={[styles.field, focused && styles.fieldFocused, Boolean(error) && styles.fieldError]}
       >
         <TextInput
@@ -44,14 +64,8 @@ export function Input({
           placeholderTextColor={colors.textMuted}
           secureTextEntry={hidden}
           style={styles.input}
-          onFocus={(event) => {
-            setFocused(true);
-            onFocus?.(event);
-          }}
-          onBlur={(event) => {
-            setFocused(false);
-            onBlur?.(event);
-          }}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
           {...rest}
         />
         {secure ? (
@@ -59,7 +73,7 @@ export function Input({
             accessibilityRole="button"
             accessibilityLabel={hidden ? 'Show password' : 'Hide password'}
             hitSlop={8}
-            onPress={() => setHidden((value) => !value)}
+            onPress={toggleSecure}
             style={styles.toggle}
           >
             <Text variant="caption" color="primary">

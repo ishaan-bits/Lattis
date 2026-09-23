@@ -1,5 +1,5 @@
 /**
- * GeminiProvider — streams Gemini 2.5 Flash directly from the app.
+ * GeminiProvider — streams Gemini 3.6 Flash directly from the app.
  *
  * No Cloud Functions intermediary: `@google/genai` is called in-process and
  * text chunks are yielded as they arrive. The API key comes only from
@@ -12,7 +12,7 @@ import { requireGeminiApiKey } from '@/config/gemini';
 
 import type { AIChatMessage, AIProvider } from './types';
 
-const MODEL = 'gemini-2.5-flash';
+const MODEL = 'gemini-3.6-flash';
 const TEMPERATURE = 0.7;
 const MAX_OUTPUT_TOKENS = 500;
 
@@ -31,6 +31,7 @@ export class GeminiProvider implements AIProvider {
         config: {
           temperature: TEMPERATURE,
           maxOutputTokens: MAX_OUTPUT_TOKENS,
+          thinkingConfig: { thinkingBudget: 0 },
         },
       });
 

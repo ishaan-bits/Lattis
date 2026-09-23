@@ -41,7 +41,7 @@ export type UserProfile = {
   updatedAt?: string;
 };
 
-type UserProfileDoc = Omit<UserProfile, 'uid' | 'createdAt' | 'updatedAt'> & {
+type UserProfileDoc = Omit<UserProfile, 'createdAt' | 'updatedAt'> & {
   createdAt?: unknown;
   updatedAt?: unknown;
 };
@@ -106,6 +106,7 @@ export async function createUserProfile(
 
   const ref = doc(db, 'users', profile.uid);
   const payload: UserProfileDoc = {
+    uid: profile.uid,
     username: normalized,
     fullName: profile.fullName.trim(),
     dateOfBirth: profile.dateOfBirth,
@@ -133,7 +134,6 @@ export async function createUserProfile(
   }
 
   return {
-    uid: profile.uid,
     ...payload,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),

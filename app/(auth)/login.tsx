@@ -2,7 +2,7 @@
  * Login screen — email + password authentication.
  */
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -27,7 +27,7 @@ export default function LoginScreen(): React.JSX.Element {
 
   const canSubmit = email.trim().length > 0 && password.length > 0 && !busy && !loading;
 
-  async function onSubmit() {
+  const onSubmit = useCallback(async () => {
     if (!canSubmit) return;
     setError(null);
     setBusy(true);
@@ -39,7 +39,7 @@ export default function LoginScreen(): React.JSX.Element {
     } finally {
       setBusy(false);
     }
-  }
+  }, [canSubmit, login, email, password]);
 
   return (
     <ScreenContainer edges={['top', 'bottom', 'left', 'right']}>

@@ -16,6 +16,7 @@ import {
   CreateProjectSheet,
   EmptyProjects,
   FabButton,
+  PressableScale,
   ProjectActionsSheet,
   ProjectCard,
   RenameProjectSheet,
@@ -134,16 +135,17 @@ export default function HomeScreen(): React.JSX.Element {
                   Your ideas, organized.
                 </Text>
               </View>
-              <View
+              <PressableScale
                 accessibilityLabel="Account"
                 accessibilityRole="button"
+                onPress={onAvatarPress}
+                scaleTo={0.92}
                 style={styles.avatar}
-                onTouchEnd={onAvatarPress}
               >
                 <Text variant="bodyMedium" color="primary">
                   {avatarLetter}
                 </Text>
-              </View>
+              </PressableScale>
             </View>
 
             <SearchBar

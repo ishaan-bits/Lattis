@@ -13,6 +13,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components';
 import { colors, radius, shadows, spacing } from '@/theme';
@@ -35,6 +36,8 @@ export function FabButton({
   label = 'Create project',
 }: FabButtonProps): React.JSX.Element {
   const rotation = useSharedValue(0);
+  const insets = useSafeAreaInsets();
+  const hostPad: ViewStyle = { bottom: Math.max(spacing.lg, insets.bottom + spacing.sm) };
 
   useEffect(() => {
     rotation.value = withSpring(active ? 45 : 0, { damping: 15, stiffness: 180 });
@@ -45,7 +48,10 @@ export function FabButton({
   }));
 
   return (
-    <Animated.View entering={FadeInUp.delay(400).duration(400)} style={[styles.host, style]}>
+    <Animated.View
+      entering={FadeInUp.delay(400).duration(400)}
+      style={[styles.host, hostPad, style]}
+    >
       <Animated.View style={morphStyle}>
         <PressableScale accessibilityLabel={label} onPress={onPress} style={styles.fab}>
           <Icon name="plus" size={26} color={colors.textInverse} />
@@ -59,7 +65,6 @@ const styles = StyleSheet.create({
   host: {
     position: 'absolute',
     right: spacing.lg,
-    bottom: spacing.lg,
   },
   fab: {
     width: 56,

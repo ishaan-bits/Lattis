@@ -19,8 +19,10 @@ import {
   ScrollView,
   StyleSheet,
   View,
+  type ViewStyle,
 } from 'react-native';
 import Animated, { FadeInUp } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, ScreenContainer, Text } from '@/components';
 import { aiProvider, type AIChatMessage } from '@/features/ai';
@@ -64,6 +66,8 @@ export default function ChatScreen(): React.JSX.Element {
 
   const { thread, loading: threadLoading } = useThread(threadId || null);
   const { messages, loading: messagesLoading } = useThreadMessages(threadId || null);
+  const insets = useSafeAreaInsets();
+  const headerInsets: ViewStyle = { paddingTop: insets.top + spacing.xs };
 
   const scrollRef = useRef<ScrollView>(null);
   const cancelledRef = useRef(false);
@@ -240,8 +244,8 @@ export default function ChatScreen(): React.JSX.Element {
     !messagesLoading && messages.length === 0 && streamText === null && !awaiting;
 
   return (
-    <ScreenContainer horizontalPadding={0} edges={['top', 'left', 'right', 'bottom']}>
-      <View style={styles.header}>
+    <ScreenContainer horizontalPadding={0} edges={['left', 'right', 'bottom']}>
+      <View style={[styles.header, headerInsets]}>
         <PressableScale
           accessibilityLabel="Back to threads"
           accessibilityRole="button"

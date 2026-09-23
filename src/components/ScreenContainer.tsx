@@ -33,7 +33,9 @@ export function ScreenContainer({
   const insets = useSafeAreaInsets();
 
   const padding: ViewStyle = {
-    paddingHorizontal: horizontalPadding,
+    paddingTop: edges.includes('top') ? insets.top : 0,
+    paddingLeft: horizontalPadding + (edges.includes('left') ? insets.left : 0),
+    paddingRight: horizontalPadding + (edges.includes('right') ? insets.right : 0),
     // Keep content clear of the home indicator when not scrolling.
     paddingBottom: edges.includes('bottom') ? insets.bottom : spacing.lg,
   };
