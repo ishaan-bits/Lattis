@@ -5,7 +5,7 @@
  * focus ring, and optional error message — no inline styles.
  */
 
-import { useCallback, useState } from 'react';
+import { forwardRef, useCallback, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 
 import { Text } from '@/components';
@@ -18,14 +18,10 @@ export type InputProps = Omit<TextInputProps, 'style'> & {
   error?: string | null;
 };
 
-export function Input({
-  label,
-  secure = false,
-  error,
-  onFocus,
-  onBlur,
-  ...rest
-}: InputProps): React.JSX.Element {
+export const Input = forwardRef<TextInput, InputProps>(function Input(
+  { label, secure = false, error, onFocus, onBlur, ...rest },
+  ref,
+): React.JSX.Element {
   const [focused, setFocused] = useState(false);
   const [hidden, setHidden] = useState(secure);
 
@@ -58,21 +54,23 @@ export function Input({
         style={[styles.field, focused && styles.fieldFocused, Boolean(error) && styles.fieldError]}
       >
         <TextInput
+          ref={ref}
           accessibilityLabel={label}
+          aria-invalid={Boolean(error)}
           autoCapitalize="none"
           autoCorrect={false}
           placeholderTextColor={colors.textMuted}
-          secureTextEntry={hidden}
           style={styles.input}
           onFocus={handleFocus}
           onBlur={handleBlur}
           {...rest}
+          secureTextEntry={secure && hidden}
         />
         {secure ? (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={hidden ? 'Show password' : 'Hide password'}
-            hitSlop={8}
+            hitSlop={12}
             onPress={toggleSecure}
             style={styles.toggle}
           >
@@ -89,7 +87,7 @@ export function Input({
       ) : null}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   group: {

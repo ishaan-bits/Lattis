@@ -7,7 +7,6 @@
 export { ChatComposer, type ChatComposerProps } from './components/ChatComposer';
 export { CreateThreadSheet } from './components/CreateThreadSheet';
 export { EmptyThreads } from './components/EmptyThreads';
-export { MessageBubble, type MessageBubbleProps } from './components/MessageBubble';
 export { RenameThreadSheet } from './components/RenameThreadSheet';
 export { ThreadActionsSheet } from './components/ThreadActionsSheet';
 export { ThreadCard, type ThreadCardProps } from './components/ThreadCard';

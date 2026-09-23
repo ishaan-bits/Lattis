@@ -21,7 +21,7 @@ const ANIMATION_MS = 650;
 const MIN_SPLASH_MS = 1400;
 
 export default function SplashScreen(): React.JSX.Element {
-  const { initialized, user, initialize, loading } = useAuth();
+  const { initialized, user, initialize, loading, authLoading } = useAuth();
 
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.92);
@@ -45,14 +45,14 @@ export default function SplashScreen(): React.JSX.Element {
   }, [initialize]);
 
   useEffect(() => {
-    if (!initialized || loading) return;
+    if (authLoading || !initialized || loading) return;
 
     const timer = setTimeout(() => {
       router.replace(user ? '/' : '/login');
     }, MIN_SPLASH_MS);
 
     return () => clearTimeout(timer);
-  }, [initialized, loading, user]);
+  }, [authLoading, initialized, loading, user]);
 
   return (
     <View style={styles.root}>

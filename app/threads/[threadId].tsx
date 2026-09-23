@@ -54,7 +54,7 @@ const PROMPT_CHIPS = [
 ];
 
 export default function ChatScreen(): React.JSX.Element {
-  const { initialized, user, loading } = useAuth();
+  const { initialized, user, authLoading } = useAuth();
   const params = useLocalSearchParams<{
     threadId?: string;
     threadTitle?: string;
@@ -71,6 +71,8 @@ export default function ChatScreen(): React.JSX.Element {
 
   const scrollRef = useRef<ScrollView>(null);
   const cancelledRef = useRef(false);
+  const mountedRef = useRef(true);
+  const nearBottomRef = useRef(true);
   const [draft, setDraft] = useState('');
   const [streamText, setStreamText] = useState<string | null>(null);
   const [awaiting, setAwaiting] = useState(false);
@@ -82,6 +84,17 @@ export default function ChatScreen(): React.JSX.Element {
   const title = thread?.title ?? fallbackTitle;
 
   useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      cancelledRef.current = true;
+    };
+  }, []);
+
+  // Auto-scroll only when the user is already near the bottom — don't yank
+  // the viewport while reading history mid-stream.
+  useEffect(() => {
+    if (!nearBottomRef.current) return;
     const frame = requestAnimationFrame(() => {
       scrollRef.current?.scrollToEnd({ animated: true });
     });
@@ -99,7 +112,7 @@ export default function ChatScreen(): React.JSX.Element {
     return <Redirect href="/" />;
   }
 
-  if (!initialized && loading) {
+  if (authLoading) {
     return <Redirect href="/splash" />;
   }
 
@@ -109,14 +122,13 @@ export default function ChatScreen(): React.JSX.Element {
 
   /** Streams one assistant reply; respects the stop flag, then persists. */
   async function streamReply(history: AIChatMessage[]): Promise<void> {
-    cancelledRef.current = false;
     setAwaiting(true);
 
     let acc = '';
     let failed = false;
     try {
       for await (const chunk of aiProvider.sendMessage(history)) {
-        if (cancelledRef.current) break;
+        if (cancelledRef.current || !mountedRef.current) break;
         setAwaiting(false);
         acc += chunk;
         setStreamText(acc);
@@ -126,8 +138,13 @@ export default function ChatScreen(): React.JSX.Element {
     }
 
     if (failed) {
-      acc = FALLBACK_REPLY;
-      setStreamText(acc);
+      // Keep partial content if the stream already produced something.
+      if (acc.trim()) {
+        setStreamText(acc);
+      } else {
+        acc = FALLBACK_REPLY;
+        setStreamText(acc);
+      }
     } else if (!acc.trim() && !cancelledRef.current) {
       // Provider yielded nothing without throwing — treat as a failure.
       acc = FALLBACK_REPLY;
@@ -136,7 +153,7 @@ export default function ChatScreen(): React.JSX.Element {
 
     // Persist the reply (partial text when stopped mid-stream); a stop
     // before the first token has nothing to save.
-    if (acc.trim()) {
+    if (acc.trim() && mountedRef.current) {
       try {
         await sendThreadMessage(threadId, { role: 'assistant', content: acc });
       } catch {
@@ -144,8 +161,10 @@ export default function ChatScreen(): React.JSX.Element {
       }
     }
 
-    setStreamText(null);
-    setAwaiting(false);
+    if (mountedRef.current) {
+      setStreamText(null);
+      setAwaiting(false);
+    }
     cancelledRef.current = false;
   }
 
@@ -154,6 +173,7 @@ export default function ChatScreen(): React.JSX.Element {
     if (!text || busy) return;
 
     setDraft('');
+    cancelledRef.current = false;
 
     // First message names the thread from its opening line.
     if (messages.length === 0) {
@@ -176,9 +196,11 @@ export default function ChatScreen(): React.JSX.Element {
     } catch (error) {
       Alert.alert(
         'Could not send message',
-        error instanceof Error ? error.message : 'Please try again.',
+        error instanceof Error && error.message ? error.message : 'Please try again.',
       );
       setAwaiting(false);
+      // Restore the draft so the user doesn't lose their text.
+      setDraft((current) => (current === '' ? text : current));
       return;
     }
 
@@ -192,6 +214,10 @@ export default function ChatScreen(): React.JSX.Element {
 
   function onStop(): void {
     cancelledRef.current = true;
+    // Stop while still awaiting first token — clear the spinner immediately.
+    if (streamText === null) {
+      setAwaiting(false);
+    }
   }
 
   async function onRegenerate(messageId: string): Promise<void> {
@@ -207,13 +233,14 @@ export default function ChatScreen(): React.JSX.Element {
     if (history.length === 0 || history[history.length - 1]?.role !== 'user') return;
 
     setAwaiting(true);
+    cancelledRef.current = false;
     try {
       // Firestore forbids message updates — regenerate deletes and re-streams.
       await deleteThreadMessage(threadId, messageId);
     } catch (error) {
       Alert.alert(
         'Could not regenerate reply',
-        error instanceof Error ? error.message : 'Please try again.',
+        error instanceof Error && error.message ? error.message : 'Please try again.',
       );
       setAwaiting(false);
       return;
@@ -249,7 +276,7 @@ export default function ChatScreen(): React.JSX.Element {
         <PressableScale
           accessibilityLabel="Back to threads"
           accessibilityRole="button"
-          hitSlop={8}
+          hitSlop={12}
           onPress={() => router.back()}
           scaleTo={0.9}
           style={styles.back}
@@ -268,7 +295,7 @@ export default function ChatScreen(): React.JSX.Element {
           accessibilityLabel="Thread actions"
           accessibilityRole="button"
           disabled={!thread}
-          hitSlop={8}
+          hitSlop={12}
           onPress={() => setActionsThread(thread)}
           scaleTo={0.9}
           style={styles.headerBtn}
@@ -288,6 +315,13 @@ export default function ChatScreen(): React.JSX.Element {
           keyboardDismissMode="interactive"
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
+          onScroll={(event) => {
+            const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+            const distanceFromBottom =
+              contentSize.height - layoutMeasurement.height - contentOffset.y;
+            nearBottomRef.current = distanceFromBottom < 120;
+          }}
+          scrollEventThrottle={16}
         >
           {messagesLoading && messages.length === 0 ? (
             <View style={styles.loadingBox}>
@@ -392,20 +426,20 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   back: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: radius.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerCopy: {
     flex: 1,
-    gap: 1,
+    gap: spacing.xxs,
   },
   headerBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: radius.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -436,7 +470,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   emptyTitle: {
-    letterSpacing: -0.5,
+    letterSpacing: -0.4,
   },
   emptyBody: {
     textAlign: 'center',

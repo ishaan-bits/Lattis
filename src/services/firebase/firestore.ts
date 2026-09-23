@@ -466,3 +466,20 @@ export function watchThreadPreview(
 export async function deleteThreadMessage(threadId: string, messageId: string): Promise<void> {
   await deleteDoc(doc(db, 'threads', threadId, 'messages', messageId));
 }
+
+/**
+ * Patch AI-written node content under `projects/{projectId}/nodes/{nodeId}`.
+ * Writes only `content` (and optional `title`) so a stream finalize never
+ * clobbers position or color fields.
+ */
+export function patchNodeAIContent(
+  projectId: string,
+  nodeId: string,
+  patch: { content: string; title?: string },
+): void {
+  void updateDoc(doc(db, 'projects', projectId, 'nodes', nodeId), {
+    content: patch.content,
+    ...(patch.title !== undefined ? { title: patch.title } : {}),
+    updatedAt: serverTimestamp(),
+  }).catch(() => undefined);
+}

@@ -5,7 +5,7 @@
  * starts, so field state initializes from props without an effect.
  */
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Alert, StyleSheet } from 'react-native';
 
 import { Button } from '@/components';
@@ -30,6 +30,7 @@ export function RenameProjectSheet({
 
   const [title, setTitle] = useState(project?.title ?? '');
   const [busy, setBusy] = useState(false);
+  const busyRef = useRef(false);
 
   const trimmedTitle = title.trim();
   const titleError =
@@ -45,7 +46,8 @@ export function RenameProjectSheet({
     !busy;
 
   async function onSubmit(): Promise<void> {
-    if (!project || !canSubmit) return;
+    if (!project || !canSubmit || busyRef.current) return;
+    busyRef.current = true;
     setBusy(true);
     try {
       await rename(project.id, trimmedTitle);
@@ -53,9 +55,10 @@ export function RenameProjectSheet({
     } catch (error) {
       Alert.alert(
         'Could not rename project',
-        error instanceof Error ? error.message : 'Please try again.',
+        error instanceof Error && error.message ? error.message : 'Please try again.',
       );
     } finally {
+      busyRef.current = false;
       setBusy(false);
     }
   }
@@ -84,11 +87,13 @@ export function RenameProjectSheet({
         onChangeText={setTitle}
         autoCapitalize="sentences"
         autoCorrect
+        returnKeyType="go"
         placeholder="Project title"
         maxLength={PROJECT_TITLE_MAX + 20}
         error={titleError}
         editable={!busy}
         autoFocus
+        onSubmitEditing={() => void onSubmit()}
       />
     </SheetShell>
   );

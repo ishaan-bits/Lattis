@@ -5,8 +5,9 @@
  * Never hardcode secrets here — use `.env` / EAS secrets.
  */
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getApp, getApps, initializeApp, type FirebaseApp } from 'firebase/app';
-import { getAuth, type Auth } from 'firebase/auth';
+import { getAuth, getReactNativePersistence, initializeAuth, type Auth } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY ?? '',
@@ -40,5 +41,23 @@ function createApp(): FirebaseApp {
 /** Default Firebase app (singleton). */
 export const app: FirebaseApp = createApp();
 
-/** Default Firebase Auth instance (singleton). */
-export const auth: Auth = getAuth(app);
+function createAuth(firebaseApp: FirebaseApp): Auth {
+  try {
+    return initializeAuth(firebaseApp, {
+      persistence: getReactNativePersistence(AsyncStorage),
+    });
+  } catch (error) {
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      error.code === 'auth/already-initialized'
+    ) {
+      return getAuth(firebaseApp);
+    }
+    throw error;
+  }
+}
+
+/** Default Firebase Auth instance (singleton with AsyncStorage persistence). */
+export const auth: Auth = createAuth(app);

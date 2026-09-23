@@ -32,7 +32,7 @@ function Action({
     <PressableScale
       accessibilityLabel={label}
       accessibilityRole="button"
-      hitSlop={8}
+      hitSlop={12}
       onPress={onPress}
       scaleTo={0.88}
       style={styles.action}
@@ -92,8 +92,8 @@ const styles = StyleSheet.create({
     gap: spacing.xxs,
   },
   action: {
-    width: 30,
-    height: 30,
+    width: 44,
+    height: 44,
     borderRadius: radius.full,
     alignItems: 'center',
     justifyContent: 'center',

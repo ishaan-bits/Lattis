@@ -2,7 +2,7 @@
  * Login screen — email + password authentication.
  */
 
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -10,12 +10,13 @@ import {
   ScrollView,
   StyleSheet,
   View,
+  type TextInput,
 } from 'react-native';
 import { Link, router } from 'expo-router';
 
 import { AuthButton, Input, useAuth } from '@/features/auth';
 import { ScreenContainer, Text } from '@/components';
-import { colors, spacing } from '@/theme';
+import { colors, radius, spacing } from '@/theme';
 
 export default function LoginScreen(): React.JSX.Element {
   const { login, loading } = useAuth();
@@ -24,19 +25,23 @@ export default function LoginScreen(): React.JSX.Element {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const passwordRef = useRef<TextInput>(null);
+  const busyRef = useRef(false);
 
   const canSubmit = email.trim().length > 0 && password.length > 0 && !busy && !loading;
 
   const onSubmit = useCallback(async () => {
-    if (!canSubmit) return;
+    if (!canSubmit || busyRef.current) return;
+    busyRef.current = true;
     setError(null);
     setBusy(true);
     try {
       await login(email.trim(), password);
       router.replace('/');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to sign in.');
+      setError(err instanceof Error && err.message ? err.message : 'Unable to sign in.');
     } finally {
+      busyRef.current = false;
       setBusy(false);
     }
   }, [canSubmit, login, email, password]);
@@ -68,16 +73,25 @@ export default function LoginScreen(): React.JSX.Element {
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
+              autoComplete="email"
+              textContentType="emailAddress"
+              returnKeyType="next"
               placeholder="you@example.com"
               editable={!busy && !loading}
+              onSubmitEditing={() => passwordRef.current?.focus()}
             />
             <Input
+              ref={passwordRef}
               label="Password"
               value={password}
               onChangeText={setPassword}
               secure
+              autoComplete="password"
+              textContentType="password"
+              returnKeyType="go"
               placeholder="Your password"
               editable={!busy && !loading}
+              onSubmitEditing={() => void onSubmit()}
             />
 
             {error ? (
@@ -90,7 +104,12 @@ export default function LoginScreen(): React.JSX.Element {
 
             <View style={styles.rowEnd}>
               <Link href="/forgot-password" asChild>
-                <Pressable accessibilityRole="link" disabled={busy || loading} hitSlop={8}>
+                <Pressable
+                  accessibilityRole="link"
+                  accessibilityLabel="Forgot password"
+                  disabled={busy || loading}
+                  hitSlop={12}
+                >
                   <Text variant="bodyMedium" color="primary">
                     Forgot password?
                   </Text>
@@ -111,7 +130,12 @@ export default function LoginScreen(): React.JSX.Element {
               Don&apos;t have an account?{' '}
             </Text>
             <Link href="/register" asChild>
-              <Pressable accessibilityRole="link" disabled={busy || loading}>
+              <Pressable
+                accessibilityRole="link"
+                accessibilityLabel="Create account"
+                disabled={busy || loading}
+                hitSlop={12}
+              >
                 <Text variant="bodyMedium" color="primary">
                   Create account
                 </Text>
@@ -138,15 +162,15 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   title: {
-    letterSpacing: -0.5,
+    letterSpacing: -0.4,
   },
   form: {
     gap: spacing.md,
   },
   errorBox: {
-    backgroundColor: 'rgba(248, 113, 113, 0.12)',
+    backgroundColor: colors.dangerSoft,
     borderColor: colors.danger,
-    borderRadius: 12,
+    borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,

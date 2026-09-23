@@ -41,7 +41,7 @@ function requireTitle(title: string): string {
 
 export const useThreadsStore = create<ThreadsState>((set, get) => ({
   threads: [],
-  loading: false,
+  loading: true,
   searchQuery: '',
   projectId: null,
 
@@ -86,6 +86,6 @@ export const useThreadsStore = create<ThreadsState>((set, get) => ({
   reset: () => {
     unsubscribeThreads?.();
     unsubscribeThreads = null;
-    set({ threads: [], loading: false, searchQuery: '', projectId: null });
+    set({ threads: [], loading: true, searchQuery: '', projectId: null });
   },
 }));

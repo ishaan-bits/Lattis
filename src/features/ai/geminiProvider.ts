@@ -14,7 +14,7 @@ import type { AIChatMessage, AIProvider } from './types';
 
 const MODEL = 'gemini-3.6-flash';
 const TEMPERATURE = 0.7;
-const MAX_OUTPUT_TOKENS = 500;
+const MAX_OUTPUT_TOKENS = 1024;
 
 export class GeminiProvider implements AIProvider {
   async *sendMessage(messages: AIChatMessage[]): AsyncGenerator<string, void, unknown> {

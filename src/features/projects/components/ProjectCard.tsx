@@ -70,7 +70,7 @@ export function ProjectCard({
         <Pressable
           accessibilityLabel={`Actions for ${project.title}`}
           accessibilityRole="button"
-          hitSlop={8}
+          hitSlop={12}
           onPress={onActions}
           style={styles.more}
         >
@@ -123,8 +123,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: spacing.xs,
     right: spacing.xs,
-    width: 32,
-    height: 32,
+    width: 44,
+    height: 44,
     borderRadius: radius.sm,
     alignItems: 'center',
     justifyContent: 'center',

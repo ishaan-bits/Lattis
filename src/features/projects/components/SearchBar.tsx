@@ -3,7 +3,7 @@
  */
 
 import { useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { Keyboard, StyleSheet, TextInput, View } from 'react-native';
 
 import { Icon, Text } from '@/components';
 import { colors, radius, spacing } from '@/theme';
@@ -37,13 +37,14 @@ export function SearchBar({
         placeholder={placeholder}
         placeholderTextColor={colors.textMuted}
         returnKeyType="search"
+        onSubmitEditing={() => Keyboard.dismiss()}
         style={styles.input}
         value={value}
       />
       {value.length > 0 ? (
         <PressableScale
           accessibilityLabel="Clear search"
-          hitSlop={8}
+          hitSlop={12}
           onPress={() => onChangeText('')}
           scaleTo={0.9}
           style={styles.clear}

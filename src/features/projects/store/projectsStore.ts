@@ -24,6 +24,7 @@ export type CreateProjectValues = {
 export type ProjectsState = {
   projects: Project[];
   loading: boolean;
+  error: string | null;
   searchQuery: string;
   subscribe: (ownerId: string) => void;
   create: (values: CreateProjectValues) => Promise<void>;
@@ -46,16 +47,17 @@ function requireTitle(title: string): string {
 
 export const useProjectsStore = create<ProjectsState>((set) => ({
   projects: [],
-  loading: false,
+  loading: true,
+  error: null,
   searchQuery: '',
 
   subscribe: (ownerId) => {
     unsubscribeProjects?.();
-    set({ loading: true });
+    set({ loading: true, error: null });
     unsubscribeProjects = watchProjects(
       ownerId,
-      (projects) => set({ projects, loading: false }),
-      () => set({ loading: false }),
+      (projects) => set({ projects, loading: false, error: null }),
+      () => set({ loading: false, error: "Couldn't load projects. Pull to retry." }),
     );
   },
 
@@ -87,6 +89,6 @@ export const useProjectsStore = create<ProjectsState>((set) => ({
   reset: () => {
     unsubscribeProjects?.();
     unsubscribeProjects = null;
-    set({ projects: [], loading: false, searchQuery: '' });
+    set({ projects: [], loading: false, error: null, searchQuery: '' });
   },
 }));

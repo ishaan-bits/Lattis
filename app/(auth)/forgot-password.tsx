@@ -2,7 +2,7 @@
  * Forgot-password screen — send a reset link via Firebase.
  */
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -10,24 +10,28 @@ import {
   ScrollView,
   StyleSheet,
   View,
+  type TextInput,
 } from 'react-native';
 import { Link } from 'expo-router';
 
 import { AuthButton, Input } from '@/features/auth';
 import { ScreenContainer, Text } from '@/components';
-import { authErrorMessage, resetPassword } from '@/services';
-import { colors, spacing } from '@/theme';
+import { resetPassword, resetPasswordErrorMessage } from '@/services';
+import { colors, radius, spacing } from '@/theme';
 
 export default function ForgotPasswordScreen(): React.JSX.Element {
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const busyRef = useRef(false);
+  const emailRef = useRef<TextInput>(null);
 
   const canSubmit = email.trim().length > 0 && !busy;
 
   async function onSubmit() {
-    if (!canSubmit) return;
+    if (!canSubmit || busyRef.current) return;
+    busyRef.current = true;
     setError(null);
     setSuccess(null);
     setBusy(true);
@@ -35,8 +39,10 @@ export default function ForgotPasswordScreen(): React.JSX.Element {
       await resetPassword(email.trim());
       setSuccess('Password reset email sent. Check your inbox.');
     } catch (err) {
-      setError(authErrorMessage(err));
+      setSuccess(null);
+      setError(resetPasswordErrorMessage(err));
     } finally {
+      busyRef.current = false;
       setBusy(false);
     }
   }
@@ -63,14 +69,21 @@ export default function ForgotPasswordScreen(): React.JSX.Element {
 
           <View style={styles.form}>
             <Input
+              ref={emailRef}
               label="Email"
               value={email}
-              onChangeText={setEmail}
+              onChangeText={(text) => {
+                setEmail(text);
+                setError(null);
+                setSuccess(null);
+              }}
               keyboardType="email-address"
               autoComplete="email"
               textContentType="emailAddress"
+              returnKeyType="go"
               placeholder="you@example.com"
               editable={!busy}
+              onSubmitEditing={() => void onSubmit()}
             />
 
             {error ? (
@@ -99,7 +112,12 @@ export default function ForgotPasswordScreen(): React.JSX.Element {
 
           <View style={styles.footer}>
             <Link href="/login" asChild>
-              <Pressable accessibilityRole="link" disabled={busy}>
+              <Pressable
+                accessibilityRole="link"
+                accessibilityLabel="Back to sign in"
+                disabled={busy}
+                hitSlop={12}
+              >
                 <Text variant="bodyMedium" color="primary">
                   Back to sign in
                 </Text>
@@ -126,23 +144,23 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   title: {
-    letterSpacing: -0.5,
+    letterSpacing: -0.4,
   },
   form: {
     gap: spacing.md,
   },
   errorBox: {
-    backgroundColor: 'rgba(248, 113, 113, 0.12)',
+    backgroundColor: colors.dangerSoft,
     borderColor: colors.danger,
-    borderRadius: 12,
+    borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
   },
   successBox: {
-    backgroundColor: 'rgba(52, 211, 153, 0.12)',
+    backgroundColor: colors.successSoft,
     borderColor: colors.success,
-    borderRadius: 12,
+    borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,

@@ -33,12 +33,20 @@ export const colors = {
   primaryPressed: '#2563EB',
   /** Low-emphasis primary wash (selected rows, chips). */
   primarySoft: 'rgba(59, 130, 246, 0.16)',
+  /** Pressed primary wash for secondary controls. */
+  primarySoftPressed: 'rgba(59, 130, 246, 0.28)',
   /** Secondary accent for highlights. */
   accent: '#38BDF8',
+  /** Low-emphasis accent wash (shimmer, highlights). */
+  accentSoft: 'rgba(56, 189, 248, 0.22)',
 
   /** Semantic feedback. */
   danger: '#F87171',
+  /** Low-emphasis danger wash (inline error banners). */
+  dangerSoft: 'rgba(248, 113, 113, 0.12)',
   success: '#34D399',
+  /** Low-emphasis success wash (inline success banners). */
+  successSoft: 'rgba(52, 211, 153, 0.12)',
   warning: '#FBBF24',
 
   /** Scrim behind dialogs / sheets. */

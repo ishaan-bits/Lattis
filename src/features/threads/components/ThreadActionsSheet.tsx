@@ -44,7 +44,7 @@ export function ThreadActionsSheet({
       .catch((error: unknown) => {
         Alert.alert(
           thread.archived ? 'Could not unarchive thread' : 'Could not archive thread',
-          error instanceof Error ? error.message : 'Please try again.',
+          error instanceof Error && error.message ? error.message : 'Please try again.',
         );
       });
   }
@@ -65,7 +65,7 @@ export function ThreadActionsSheet({
               .catch((error: unknown) => {
                 Alert.alert(
                   'Could not delete thread',
-                  error instanceof Error ? error.message : 'Please try again.',
+                  error instanceof Error && error.message ? error.message : 'Please try again.',
                 );
               });
           },

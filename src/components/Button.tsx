@@ -51,7 +51,7 @@ const restingStyles: Record<ButtonVariant, ViewStyle> = {
 
 const pressedStyles: Record<ButtonVariant, ViewStyle> = {
   primary: { backgroundColor: colors.primaryPressed },
-  secondary: { backgroundColor: 'rgba(59, 130, 246, 0.28)' },
+  secondary: { backgroundColor: colors.primarySoftPressed },
   ghost: { backgroundColor: colors.surface },
 };
 

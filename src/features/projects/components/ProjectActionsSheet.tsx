@@ -53,7 +53,7 @@ export function ProjectActionsSheet({
               .catch((error: unknown) => {
                 Alert.alert(
                   'Could not delete project',
-                  error instanceof Error ? error.message : 'Please try again.',
+                  error instanceof Error && error.message ? error.message : 'Please try again.',
                 );
               });
           },

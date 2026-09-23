@@ -75,6 +75,7 @@ export type AuthState = {
   user: AuthUser | null;
   userProfile: UserProfile | null;
   loading: boolean;
+  authLoading: boolean;
   initialized: boolean;
   initialize: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
@@ -124,6 +125,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
     user: null,
     userProfile: null,
     loading: false,
+    authLoading: true,
     initialized: false,
 
     initialize: async () => {
@@ -137,7 +139,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
 
           unsubscribeAuth?.();
           unsubscribeAuth = observeAuthState((user) => {
-            set({ user, loading: false, initialized: true });
+            set({ user, loading: false, initialized: true, authLoading: false });
             void writeSession(user);
             if (user) {
               attachProfile(user.uid);
@@ -146,14 +148,14 @@ export const useAuthStore = create<AuthState>((set, get) => {
               detachProfile();
             }
           });
-
-          // Observe fires asynchronously; mark initialized even if Firebase
-          // config is missing so splash can route (login will surface errors).
-          if (!get().initialized) {
-            set({ initialized: true, loading: false });
-          }
         } catch {
-          set({ user: null, userProfile: null, loading: false, initialized: true });
+          set({
+            user: null,
+            userProfile: null,
+            loading: false,
+            initialized: true,
+            authLoading: false,
+          });
         }
       })();
 
@@ -164,7 +166,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
       set({ loading: true });
       try {
         const user = await firebaseSignIn(email.trim(), password);
-        set({ user, loading: false, initialized: true });
+        set({ user, loading: false, initialized: true, authLoading: false });
         await writeSession(user);
         attachProfile(user.uid);
         await loadProfileOnce(user.uid);
@@ -188,15 +190,29 @@ export const useAuthStore = create<AuthState>((set, get) => {
         }
 
         const user = await signUp(email.trim(), password, fullName.trim());
-        const profile = await createUserProfile({
-          uid: user.uid,
-          username: normalizedUsername,
-          fullName: fullName.trim(),
-          dateOfBirth,
-          email: email.trim(),
-        });
+        let profile: UserProfile;
+        try {
+          profile = await createUserProfile({
+            uid: user.uid,
+            username: normalizedUsername,
+            fullName: fullName.trim(),
+            dateOfBirth,
+            email: email.trim(),
+          });
+        } catch (profileError) {
+          // Roll back the half-created account so retry doesn't hit email-already-in-use.
+          try {
+            await signOutUser();
+          } catch {
+            // Best effort — Firebase may already have signed us out.
+          }
+          detachProfile();
+          set({ user: null, userProfile: null, loading: false });
+          await writeSession(null);
+          throw profileError;
+        }
 
-        set({ user, userProfile: profile, loading: false, initialized: true });
+        set({ user, userProfile: profile, loading: false, initialized: true, authLoading: false });
         await writeSession(user);
         attachProfile(user.uid);
       } catch (error) {
@@ -210,6 +226,9 @@ export const useAuthStore = create<AuthState>((set, get) => {
       try {
         await signOutUser();
         detachProfile();
+        // Dynamic import avoids a circular dependency with the projects store.
+        const { useProjectsStore } = await import('@/features/projects/store/projectsStore');
+        useProjectsStore.getState().reset();
         set({ user: null, loading: false });
         await writeSession(null);
       } catch (error) {

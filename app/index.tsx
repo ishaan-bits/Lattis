@@ -7,7 +7,7 @@
  */
 
 import { Redirect, router } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, StyleSheet, View } from 'react-native';
 
 import { ScreenContainer, Text } from '@/components';
@@ -23,7 +23,7 @@ import {
   SearchBar,
   useProjectsStore,
 } from '@/features/projects';
-import { colors, spacing } from '@/theme';
+import { colors, radius, spacing } from '@/theme';
 import type { Project } from '@/types';
 
 function greetingForNow(date = new Date()): string {
@@ -40,10 +40,11 @@ function firstNameOf(fullName: string | null | undefined): string | null {
 }
 
 export default function HomeScreen(): React.JSX.Element {
-  const { initialized, user, userProfile, loading, logout } = useAuth();
+  const { initialized, user, userProfile, authLoading, logout } = useAuth();
 
   const projects = useProjectsStore((state) => state.projects);
   const projectsLoading = useProjectsStore((state) => state.loading);
+  const projectsError = useProjectsStore((state) => state.error);
   const searchQuery = useProjectsStore((state) => state.searchQuery);
   const setSearchQuery = useProjectsStore((state) => state.setSearchQuery);
   const subscribe = useProjectsStore((state) => state.subscribe);
@@ -70,7 +71,42 @@ export default function HomeScreen(): React.JSX.Element {
     return [...filtered].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   }, [projects, searchQuery]);
 
-  if (!initialized && loading) {
+  const openProject = useCallback((item: Project) => {
+    router.push({
+      pathname: '/projects/[projectId]',
+      params: { projectId: item.id, projectTitle: item.title },
+    });
+  }, []);
+
+  const openActions = useCallback((item: Project) => {
+    setActionsProject(item);
+  }, []);
+
+  const renderProject = useCallback(
+    ({ item, index }: { item: Project; index: number }) => {
+      const isLastOdd = visibleProjects.length % 2 === 1 && index === visibleProjects.length - 1;
+      return (
+        <>
+          <ProjectCard
+            project={item}
+            index={index}
+            onPress={() => openProject(item)}
+            onActions={() => openActions(item)}
+          />
+          {isLastOdd ? (
+            <View
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+              style={styles.gridSpacer}
+            />
+          ) : null}
+        </>
+      );
+    },
+    [openProject, openActions, visibleProjects.length],
+  );
+
+  if (authLoading) {
     return <Redirect href="/splash" />;
   }
 
@@ -80,12 +116,24 @@ export default function HomeScreen(): React.JSX.Element {
 
   const firstName = firstNameOf(userProfile?.fullName) ?? userProfile?.username ?? 'there';
   const avatarLetter = (firstName[0] ?? '?').toUpperCase();
-  const showEmptyState = !projectsLoading && projects.length === 0;
-  const showNoMatches = !projectsLoading && projects.length > 0 && visibleProjects.length === 0;
+  const showEmptyState = !projectsLoading && !projectsError && projects.length === 0;
+  const showNoMatches =
+    !projectsLoading && !projectsError && projects.length > 0 && visibleProjects.length === 0;
 
   function onAvatarPress(): void {
     Alert.alert('Account', userProfile?.email ?? user?.email ?? 'Signed in', [
-      { text: 'Sign Out', style: 'destructive', onPress: () => void logout() },
+      {
+        text: 'Sign Out',
+        style: 'destructive',
+        onPress: () => {
+          void logout().catch((err) => {
+            Alert.alert(
+              'Sign out failed',
+              err instanceof Error && err.message ? err.message : 'Please try again.',
+            );
+          });
+        },
+      },
       { text: 'Cancel', style: 'cancel' },
     ]);
   }
@@ -95,6 +143,18 @@ export default function HomeScreen(): React.JSX.Element {
       return (
         <View style={styles.loadingBox}>
           <ActivityIndicator color={colors.primary} size="small" />
+        </View>
+      );
+    }
+    if (projectsError) {
+      return (
+        <View style={styles.errorBox} accessibilityRole="alert">
+          <Text variant="body" color="danger" style={styles.centerText}>
+            {projectsError}
+          </Text>
+          <Text variant="caption" color="textMuted" style={styles.centerText}>
+            Pull to refresh or sign in again to retry.
+          </Text>
         </View>
       );
     }
@@ -124,6 +184,7 @@ export default function HomeScreen(): React.JSX.Element {
         keyboardDismissMode="on-drag"
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
+        removeClippedSubviews
         ListHeaderComponent={
           <View style={styles.header}>
             <View style={styles.topRow}>
@@ -160,19 +221,7 @@ export default function HomeScreen(): React.JSX.Element {
           </View>
         }
         ListEmptyComponent={renderEmpty}
-        renderItem={({ item, index }) => (
-          <ProjectCard
-            project={item}
-            index={index}
-            onPress={() =>
-              router.push({
-                pathname: '/projects/[projectId]',
-                params: { projectId: item.id, projectTitle: item.title },
-              })
-            }
-            onActions={() => setActionsProject(item)}
-          />
-        )}
+        renderItem={renderProject}
       />
 
       <FabButton active={createVisible} onPress={() => setCreateVisible(true)} />
@@ -211,12 +260,12 @@ const styles = StyleSheet.create({
     gap: spacing.xxs,
   },
   greeting: {
-    letterSpacing: -0.5,
+    letterSpacing: -0.4,
   },
   avatar: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: radius.full,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.primarySoft,
@@ -237,11 +286,27 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xxl,
     alignItems: 'center',
   },
+  errorBox: {
+    gap: spacing.xs,
+    paddingVertical: spacing.xl,
+    paddingHorizontal: spacing.md,
+    alignItems: 'center',
+    borderRadius: radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.danger,
+    backgroundColor: colors.dangerSoft,
+  },
+  centerText: {
+    textAlign: 'center',
+  },
   noMatches: {
     paddingVertical: spacing.xl,
     alignItems: 'center',
   },
   noMatchesText: {
     textAlign: 'center',
+  },
+  gridSpacer: {
+    flex: 1,
   },
 });

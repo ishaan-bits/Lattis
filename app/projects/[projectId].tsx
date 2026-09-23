@@ -27,7 +27,7 @@ import { colors, spacing } from '@/theme';
 import type { Thread } from '@/types';
 
 export default function ProjectThreadsScreen(): React.JSX.Element {
-  const { initialized, user, loading } = useAuth();
+  const { initialized, user, authLoading } = useAuth();
   const params = useLocalSearchParams<{ projectId?: string; projectTitle?: string }>();
   const projectId = typeof params.projectId === 'string' ? params.projectId : '';
   const projectTitle = typeof params.projectTitle === 'string' ? params.projectTitle : '';
@@ -63,7 +63,7 @@ export default function ProjectThreadsScreen(): React.JSX.Element {
     return <Redirect href="/" />;
   }
 
-  if (!initialized && loading) {
+  if (authLoading) {
     return <Redirect href="/splash" />;
   }
 
@@ -112,7 +112,7 @@ export default function ProjectThreadsScreen(): React.JSX.Element {
               <PressableScale
                 accessibilityLabel="Back to projects"
                 accessibilityRole="button"
-                hitSlop={8}
+                hitSlop={12}
                 onPress={() => router.back()}
                 scaleTo={0.9}
                 style={styles.back}
@@ -120,6 +120,24 @@ export default function ProjectThreadsScreen(): React.JSX.Element {
                 <Icon name="chevron.left" size={18} color={colors.text} />
                 <Text variant="bodyMedium" color="text">
                   Projects
+                </Text>
+              </PressableScale>
+              <PressableScale
+                accessibilityLabel="Open canvas"
+                accessibilityRole="button"
+                hitSlop={12}
+                onPress={() =>
+                  router.push({
+                    pathname: '/projects/[projectId]/canvas',
+                    params: { projectId, projectTitle },
+                  })
+                }
+                scaleTo={0.9}
+                style={styles.canvasButton}
+              >
+                <Icon name="scribble" size={16} color={colors.text} />
+                <Text variant="caption" color="text">
+                  Canvas
                 </Text>
               </PressableScale>
             </View>
@@ -164,6 +182,7 @@ export default function ProjectThreadsScreen(): React.JSX.Element {
             onActions={() => setActionsThread(item)}
           />
         )}
+        removeClippedSubviews
       />
 
       <FabButton active={createVisible} label="New thread" onPress={() => setCreateVisible(true)} />
@@ -204,11 +223,18 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xxs,
     paddingRight: spacing.xs,
   },
+  canvasButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xxs,
+    paddingVertical: spacing.xxs,
+    paddingLeft: spacing.xs,
+  },
   titleBlock: {
     gap: spacing.xxs,
   },
   title: {
-    letterSpacing: -0.5,
+    letterSpacing: -0.4,
   },
   sectionTitle: {
     marginLeft: spacing.xxs,

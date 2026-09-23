@@ -93,16 +93,36 @@ export function authErrorMessage(error: unknown): string {
     case 'auth/network-request-failed':
       return 'Network error. Check your connection.';
     case 'auth/operation-not-allowed':
-      return 'Email/password sign-in is disabled in Firebase Console.';
+      return 'Email/password sign-in is unavailable. Contact support.';
     case 'permission-denied':
-      return 'Firestore rules rejected this request. Publish the rules in Firebase Console.';
     case 'failed-precondition':
-      return 'Firestore is not ready yet. Create the database in Firebase Console.';
+      return "Couldn't finish creating your account. Please try again.";
     case 'unavailable':
       return 'Network error. Check your connection.';
     case 'already-exists':
       return 'That username is already taken.';
     default:
       return 'Something went wrong. Please try again.';
+  }
+}
+
+/** User-facing copy for password-reset failures (not login-oriented). */
+export function resetPasswordErrorMessage(error: unknown): string {
+  if (typeof error !== 'object' || error === null || !('code' in error)) {
+    return "Couldn't send the reset email. Please try again.";
+  }
+  const code = String((error as { code?: string }).code ?? '');
+  switch (code) {
+    case 'auth/invalid-email':
+      return 'Enter a valid email address.';
+    case 'auth/user-not-found':
+    case 'auth/invalid-credential':
+      return "We couldn't find an account for that email.";
+    case 'auth/too-many-requests':
+      return 'Too many attempts. Try again later.';
+    case 'auth/network-request-failed':
+      return 'Network error. Check your connection.';
+    default:
+      return "Couldn't send the reset email. Please try again.";
   }
 }

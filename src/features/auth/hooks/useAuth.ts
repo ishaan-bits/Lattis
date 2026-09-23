@@ -10,6 +10,7 @@ export function useAuth(): AuthState {
   const user = useAuthStore((state) => state.user);
   const userProfile = useAuthStore((state) => state.userProfile);
   const loading = useAuthStore((state) => state.loading);
+  const authLoading = useAuthStore((state) => state.authLoading);
   const initialized = useAuthStore((state) => state.initialized);
   const initialize = useAuthStore((state) => state.initialize);
   const login = useAuthStore((state) => state.login);
@@ -22,5 +23,15 @@ export function useAuth(): AuthState {
     }
   }, [initialized, initialize]);
 
-  return { user, userProfile, loading, initialized, initialize, login, register, logout };
+  return {
+    user,
+    userProfile,
+    loading,
+    authLoading,
+    initialized,
+    initialize,
+    login,
+    register,
+    logout,
+  };
 }

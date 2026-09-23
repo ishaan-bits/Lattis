@@ -6,7 +6,7 @@
  * UI); on success the realtime listener surfaces the card and the sheet closes.
  */
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
 import { Button, Text } from '@/components';
@@ -40,6 +40,7 @@ export function CreateProjectSheet({
   const [emoji, setEmoji] = useState<string>(DEFAULT_PROJECT_EMOJI);
   const [color, setColor] = useState<string>(DEFAULT_PROJECT_COLOR);
   const [busy, setBusy] = useState(false);
+  const busyRef = useRef(false);
 
   const trimmedTitle = title.trim();
   const titleError =
@@ -58,7 +59,8 @@ export function CreateProjectSheet({
   }
 
   async function onSubmit(): Promise<void> {
-    if (!canSubmit) return;
+    if (!canSubmit || busyRef.current) return;
+    busyRef.current = true;
     setBusy(true);
     try {
       await create({ title: trimmedTitle, description: description.trim(), emoji, color });
@@ -67,9 +69,10 @@ export function CreateProjectSheet({
     } catch (error) {
       Alert.alert(
         'Could not create project',
-        error instanceof Error ? error.message : 'Please try again.',
+        error instanceof Error && error.message ? error.message : 'Please try again.',
       );
     } finally {
+      busyRef.current = false;
       setBusy(false);
     }
   }
@@ -124,6 +127,7 @@ export function CreateProjectSheet({
           onChangeText={setTitle}
           autoCapitalize="sentences"
           autoCorrect
+          returnKeyType="next"
           placeholder="e.g. Thesis research"
           maxLength={PROJECT_TITLE_MAX + 20}
           error={titleError}
@@ -251,7 +255,7 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: radius.full,
-    backgroundColor: 'rgba(11, 15, 20, 0.45)',
+    backgroundColor: colors.overlay,
   },
   footerBtn: {
     flex: 1,

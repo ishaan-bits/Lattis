@@ -39,7 +39,7 @@ app/                  # Expo Router routes (only Home exists in phase 1)
   index.tsx           # Home screen
 
 src/
-  components/         # Shared UI kit (Button, Card, Text, Icon, ScreenContainer)
+  components/         # Shared UI kit (Button, Text, Icon, ScreenContainer)
   features/           # Feature modules (auth, projects, canvas) — empty in phase 1
   services/           # External integrations (Firebase later)
   store/              # Zustand stores

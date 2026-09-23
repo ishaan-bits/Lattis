@@ -6,7 +6,7 @@
  * realtime listener surfaces the card and the sheet closes.
  */
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 
 import { Button, Text } from '@/components';
@@ -27,6 +27,7 @@ export function CreateThreadSheet({ visible, onClose }: CreateThreadSheetProps):
 
   const [title, setTitle] = useState(DEFAULT_THREAD_TITLE);
   const [busy, setBusy] = useState(false);
+  const busyRef = useRef(false);
 
   const trimmedTitle = title.trim();
   const titleError =
@@ -42,7 +43,8 @@ export function CreateThreadSheet({ visible, onClose }: CreateThreadSheetProps):
   }
 
   async function onSubmit(): Promise<void> {
-    if (!canSubmit) return;
+    if (!canSubmit || busyRef.current) return;
+    busyRef.current = true;
     setBusy(true);
     try {
       await create(trimmedTitle);
@@ -51,9 +53,10 @@ export function CreateThreadSheet({ visible, onClose }: CreateThreadSheetProps):
     } catch (error) {
       Alert.alert(
         'Could not create thread',
-        error instanceof Error ? error.message : 'Please try again.',
+        error instanceof Error && error.message ? error.message : 'Please try again.',
       );
     } finally {
+      busyRef.current = false;
       setBusy(false);
     }
   }
@@ -82,11 +85,13 @@ export function CreateThreadSheet({ visible, onClose }: CreateThreadSheetProps):
         onChangeText={setTitle}
         autoCapitalize="sentences"
         autoCorrect
+        returnKeyType="go"
         placeholder={DEFAULT_THREAD_TITLE}
         maxLength={THREAD_TITLE_MAX + 20}
         error={titleError}
         editable={!busy}
         autoFocus
+        onSubmitEditing={() => void onSubmit()}
       />
       <View style={styles.counterRow}>
         <Text variant="caption" color="textMuted">

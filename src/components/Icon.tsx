@@ -40,6 +40,7 @@ const FALLBACK_PATHS: Partial<Record<SFSymbol, string>> = {
   checkmark: 'M5 13l4 4L19 7',
   gobackward: 'M3.5 12a8.5 8.5 0 1 0 2.5-6M3.5 4.5V10H9',
   'doc.on.doc': 'M9 9h10v10H9zM5 15H4V5a1 1 0 0 1 1-1h10v1',
+  scribble: 'M3 14c2-4 4 4 6 0s3.5-4 5.5-.5 3 2.5 6.5-1.5',
 };
 
 const DEFAULT_FALLBACK = 'M4 4h16v16H4z';

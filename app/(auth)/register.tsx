@@ -4,14 +4,16 @@
 
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Link, router } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
+  Keyboard,
   Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   View,
+  type TextInput,
 } from 'react-native';
 
 import { ScreenContainer, Text } from '@/components';
@@ -62,6 +64,11 @@ export default function RegisterScreen(): React.JSX.Element {
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const busyRef = useRef(false);
+  const usernameRef = useRef<TextInput>(null);
+  const emailRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInput>(null);
+  const confirmRef = useRef<TextInput>(null);
 
   const strength = useMemo(() => getPasswordStrength(password), [password]);
   const strengthIndex =
@@ -99,7 +106,8 @@ export default function RegisterScreen(): React.JSX.Element {
   }, []);
 
   const onSubmit = useCallback(async () => {
-    if (!canSubmit || !dateOfBirth) return;
+    if (!canSubmit || !dateOfBirth || busyRef.current) return;
+    busyRef.current = true;
     setError(null);
     setBusy(true);
     try {
@@ -112,8 +120,9 @@ export default function RegisterScreen(): React.JSX.Element {
       });
       router.replace('/');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to create account.');
+      setError(err instanceof Error && err.message ? err.message : 'Unable to create account.');
     } finally {
+      busyRef.current = false;
       setBusy(false);
     }
   }, [canSubmit, dateOfBirth, register, name, trimmedUsername, email, password]);
@@ -146,19 +155,24 @@ export default function RegisterScreen(): React.JSX.Element {
               autoCapitalize="words"
               autoComplete="name"
               textContentType="name"
+              returnKeyType="next"
               placeholder="Ada Lovelace"
               editable={!busy && !loading}
+              onSubmitEditing={() => usernameRef.current?.focus()}
             />
             <Input
+              ref={usernameRef}
               label="Username"
               value={username}
               onChangeText={setUsername}
               autoCapitalize="none"
-              autoComplete="username"
+              autoComplete="username-new"
               textContentType="username"
+              returnKeyType="next"
               placeholder="ada_lovelace"
               error={usernameFormatError}
               editable={!busy && !loading}
+              onSubmitEditing={() => emailRef.current?.focus()}
             />
 
             <View style={styles.group}>
@@ -200,25 +214,31 @@ export default function RegisterScreen(): React.JSX.Element {
             </View>
 
             <Input
+              ref={emailRef}
               label="Email"
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
               autoComplete="email"
               textContentType="emailAddress"
+              returnKeyType="next"
               placeholder="you@example.com"
               editable={!busy && !loading}
+              onSubmitEditing={() => passwordRef.current?.focus()}
             />
             <Input
+              ref={passwordRef}
               label="Password"
               value={password}
               onChangeText={setPassword}
               secure
               autoComplete="new-password"
               textContentType="newPassword"
+              returnKeyType="next"
               placeholder={`At least ${MIN_PASSWORD_LENGTH} characters`}
               error={passwordError}
               editable={!busy && !loading}
+              onSubmitEditing={() => confirmRef.current?.focus()}
             />
 
             <View style={styles.strengthRow}>
@@ -241,15 +261,21 @@ export default function RegisterScreen(): React.JSX.Element {
             </View>
 
             <Input
+              ref={confirmRef}
               label="Confirm password"
               value={confirm}
               onChangeText={setConfirm}
               secure
               autoComplete="new-password"
               textContentType="newPassword"
+              returnKeyType="go"
               placeholder="Repeat password"
               error={confirm.length > 0 && password !== confirm ? 'Passwords do not match.' : null}
               editable={!busy && !loading}
+              onSubmitEditing={() => {
+                Keyboard.dismiss();
+                void onSubmit();
+              }}
             />
 
             {error ? (
@@ -273,7 +299,12 @@ export default function RegisterScreen(): React.JSX.Element {
               Already have an account?{' '}
             </Text>
             <Link href="/login" asChild>
-              <Pressable accessibilityRole="link" disabled={busy || loading}>
+              <Pressable
+                accessibilityRole="link"
+                accessibilityLabel="Sign in"
+                disabled={busy || loading}
+                hitSlop={12}
+              >
                 <Text variant="bodyMedium" color="primary">
                   Sign in
                 </Text>
@@ -300,7 +331,7 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   title: {
-    letterSpacing: -0.5,
+    letterSpacing: -0.4,
   },
   form: {
     gap: spacing.md,
@@ -343,9 +374,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.border,
   },
   errorBox: {
-    backgroundColor: 'rgba(248, 113, 113, 0.12)',
+    backgroundColor: colors.dangerSoft,
     borderColor: colors.danger,
-    borderRadius: 12,
+    borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,

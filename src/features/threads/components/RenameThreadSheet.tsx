@@ -5,7 +5,7 @@
  * starts, so field state initializes from props without an effect.
  */
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Alert, StyleSheet } from 'react-native';
 
 import { Button } from '@/components';
@@ -27,6 +27,7 @@ export function RenameThreadSheet({ thread, onClose }: RenameThreadSheetProps): 
 
   const [title, setTitle] = useState(thread?.title ?? '');
   const [busy, setBusy] = useState(false);
+  const busyRef = useRef(false);
 
   const trimmedTitle = title.trim();
   const titleError =
@@ -39,7 +40,8 @@ export function RenameThreadSheet({ thread, onClose }: RenameThreadSheetProps): 
     thread !== null && trimmedTitle.length > 0 && trimmedTitle.length <= THREAD_TITLE_MAX && !busy;
 
   async function onSubmit(): Promise<void> {
-    if (!thread || !canSubmit) return;
+    if (!thread || !canSubmit || busyRef.current) return;
+    busyRef.current = true;
     setBusy(true);
     try {
       await rename(thread.id, trimmedTitle);
@@ -47,9 +49,10 @@ export function RenameThreadSheet({ thread, onClose }: RenameThreadSheetProps): 
     } catch (error) {
       Alert.alert(
         'Could not rename thread',
-        error instanceof Error ? error.message : 'Please try again.',
+        error instanceof Error && error.message ? error.message : 'Please try again.',
       );
     } finally {
+      busyRef.current = false;
       setBusy(false);
     }
   }
@@ -78,11 +81,13 @@ export function RenameThreadSheet({ thread, onClose }: RenameThreadSheetProps): 
         onChangeText={setTitle}
         autoCapitalize="sentences"
         autoCorrect
+        returnKeyType="go"
         placeholder="Thread title"
         maxLength={THREAD_TITLE_MAX + 20}
         error={titleError}
         editable={!busy}
         autoFocus
+        onSubmitEditing={() => void onSubmit()}
       />
     </SheetShell>
   );
