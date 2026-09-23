@@ -27,6 +27,7 @@ export type NodeToolbarProps = {
   onAction: (action: NodeAIAction) => void;
   onStop: () => void;
   onClose: () => void;
+  onDelete?: () => void;
 };
 
 function NodeToolbarComponent({
@@ -36,6 +37,7 @@ function NodeToolbarComponent({
   onAction,
   onStop,
   onClose,
+  onDelete,
 }: NodeToolbarProps): React.JSX.Element {
   return (
     <View style={[styles.panel, { left, top, width: NODE_AI_TOOLBAR_WIDTH }]}>
@@ -69,19 +71,36 @@ function NodeToolbarComponent({
           </View>
         </PressableScale>
       ) : (
-        NODE_AI_ACTIONS.map((action) => (
-          <PressableScale
-            key={action}
-            accessibilityLabel={NODE_AI_LABELS[action]}
-            onPress={() => onAction(action)}
-            scaleTo={0.97}
-            style={styles.row}
-          >
-            <Text variant="body" color="text">
-              {NODE_AI_LABELS[action]}
-            </Text>
-          </PressableScale>
-        ))
+        <>
+          {NODE_AI_ACTIONS.map((action) => (
+            <PressableScale
+              key={action}
+              accessibilityLabel={NODE_AI_LABELS[action]}
+              onPress={() => onAction(action)}
+              scaleTo={0.97}
+              style={styles.row}
+            >
+              <Text variant="body" color="text">
+                {NODE_AI_LABELS[action]}
+              </Text>
+            </PressableScale>
+          ))}
+          {onDelete ? (
+            <PressableScale
+              accessibilityLabel="Delete note"
+              onPress={onDelete}
+              scaleTo={0.97}
+              style={styles.row}
+            >
+              <View style={styles.deleteRow}>
+                <Icon name="trash" size={16} color={colors.danger} />
+                <Text variant="body" color="danger">
+                  Delete note
+                </Text>
+              </View>
+            </PressableScale>
+          ) : null}
+        </>
       )}
     </View>
   );
@@ -128,6 +147,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   stopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  deleteRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,

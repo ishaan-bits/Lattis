@@ -28,7 +28,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { trigger } from 'react-native-haptic-feedback';
 
-import { Text } from '@/components';
+import { Icon, Text } from '@/components';
 import { PressableScale } from '@/features/projects';
 import { patchNodeAIContent } from '@/services';
 import { colors, radius, shadows, spacing } from '@/theme';
@@ -587,6 +587,7 @@ export function InfiniteCanvas({ projectId }: InfiniteCanvasProps): React.JSX.El
                 aiActive={aiTargetId === node.id}
                 aiDraftText={aiDraft !== null && aiDraft.nodeId === node.id ? aiDraft.text : null}
                 aiGenerating={generating && aiTargetId === node.id}
+                onDelete={removeNodeWithEdges}
               />
             ))}
           </Animated.View>
@@ -616,13 +617,20 @@ export function InfiniteCanvas({ projectId }: InfiniteCanvasProps): React.JSX.El
           </Text>
           <PressableScale
             accessibilityLabel="Delete note"
-            onPress={() => removeNodeWithEdges(menu.nodeId)}
+            onPress={() => {
+              const targetId = menu.nodeId;
+              closeMenu();
+              removeNodeWithEdges(targetId);
+            }}
             scaleTo={0.97}
             style={styles.menuRow}
           >
-            <Text variant="body" color="danger">
-              Delete note
-            </Text>
+            <View style={styles.typeRow}>
+              <Icon name="trash" size={16} color={colors.danger} />
+              <Text variant="body" color="danger">
+                Delete note
+              </Text>
+            </View>
           </PressableScale>
           <PressableScale disabled scaleTo={1} style={styles.menuRow}>
             <Text variant="body" color="textMuted">
@@ -728,6 +736,15 @@ export function InfiniteCanvas({ projectId }: InfiniteCanvasProps): React.JSX.El
             onAction={(action: NodeAIAction) => generate(action)}
             onClose={dismissAIToolbar}
             onStop={stop}
+            onDelete={
+              aiTargetId
+                ? () => {
+                    const targetId = aiTargetId;
+                    dismissAIToolbar();
+                    removeNodeWithEdges(targetId);
+                  }
+                : undefined
+            }
             top={aiToolbarPos.top}
           />
         </>

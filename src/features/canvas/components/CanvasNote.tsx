@@ -35,12 +35,14 @@ export type CanvasNoteProps = {
   content: string;
   aiGenerating: boolean;
   aiActive: boolean;
+  showDelete?: boolean;
   onChangeTitle: (text: string) => void;
   onChangeContent: (text: string) => void;
   onFocus: () => void;
   onBlur: () => void;
   onOpenAI: () => void;
   onStopAI: () => void;
+  onDelete?: () => void;
 };
 
 function ShimmerCursor(): React.JSX.Element {
@@ -68,12 +70,14 @@ export function CanvasNote({
   content,
   aiGenerating,
   aiActive,
+  showDelete,
   onChangeTitle,
   onChangeContent,
   onFocus,
   onBlur,
   onOpenAI,
   onStopAI,
+  onDelete,
 }: CanvasNoteProps): React.JSX.Element {
   const [bodyHeight, setBodyHeight] = useState<number | null>(null);
 
@@ -114,6 +118,17 @@ export function CanvasNote({
             color={aiGenerating ? colors.danger : colors.accent}
           />
         </PressableScale>
+        {showDelete && onDelete && !aiGenerating ? (
+          <PressableScale
+            accessibilityLabel="Delete note"
+            onPress={onDelete}
+            scaleTo={0.9}
+            style={styles.deleteButton}
+            hitSlop={8}
+          >
+            <Icon name="trash" size={15} color={colors.danger} />
+          </PressableScale>
+        ) : null}
       </View>
       <TextInput
         value={content}
@@ -173,6 +188,15 @@ const styles = StyleSheet.create({
   },
   aiButtonActive: {
     backgroundColor: colors.accentSoft,
+  },
+  deleteButton: {
+    width: 28,
+    height: 28,
+    borderRadius: radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.dangerSoft,
+    flexShrink: 0,
   },
   bodyInput: {
     ...typography.caption,

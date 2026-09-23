@@ -114,4 +114,4 @@ export const EDGE_SVG_PAD = 480;
 export const EDGE_LABEL_WIDTH = 112;
 export const CONNECTION_HANDLE_SIZE = 20;
 export const NODE_AI_TOOLBAR_WIDTH = 208;
-export const NODE_AI_TOOLBAR_HEIGHT = 248;
+export const NODE_AI_TOOLBAR_HEIGHT = 300;

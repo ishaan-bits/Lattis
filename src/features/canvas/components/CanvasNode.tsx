@@ -55,6 +55,7 @@ export type CanvasNodeProps = {
   onConnect: (fromId: string, worldX: number, worldY: number) => void;
   onOpenAI: (nodeId: string) => void;
   onStopAI: () => void;
+  onDelete?: (nodeId: string) => void;
 };
 
 function syncPosition(
@@ -156,6 +157,7 @@ function CanvasNodeComponent({
   onConnect,
   onOpenAI,
   onStopAI,
+  onDelete,
 }: CanvasNodeProps): React.JSX.Element {
   const posX = useSharedValue(node.x);
   const posY = useSharedValue(node.y);
@@ -301,6 +303,8 @@ function CanvasNodeComponent({
             onFocus={handleFocus}
             onOpenAI={handleOpenAI}
             onStopAI={onStopAI}
+            showDelete={selected && !editing}
+            onDelete={onDelete ? () => onDelete(node.id) : undefined}
             title={title}
           />
         </Animated.View>
