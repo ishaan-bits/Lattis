@@ -62,3 +62,7 @@ assets/
 ## Out of scope (phase 1)
 
 Authentication, Firebase, infinite canvas implementation, and CRUD screens are intentionally **not** built yet.
+
+## Security note
+
+This portfolio demo uses `EXPO_PUBLIC_GEMINI_API_KEY` client-side for simplicity. In production, AI requests should be proxied through a secure backend.
