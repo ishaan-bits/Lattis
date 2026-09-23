@@ -1,7 +1,8 @@
 {
   "name": "lattis",
+  "description": "Lattis — premium visual thinking app: projects, Gemini chat, and an infinite canvas.",
   "main": "expo-router/entry",
-  "version": "1.0.0",
+  "version": "0.4.0",
   "dependencies": {
     "@expo/ui": "~57.0.19",
     "@google/genai": "^2.24.0",
